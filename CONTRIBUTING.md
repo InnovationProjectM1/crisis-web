@@ -42,9 +42,10 @@ This reverts commit <commit_hash>.
 
 There is a protection set on `master` branch, to avoid any direct push. All changes should be made through pull requests.
 Rules for pull requests:
+- Assign the PR to yourself.
 - Require at least **one approve** on the PR.
 - When a thread is opened by a reviewer, the contributor should answer/make the changes requested. Only the **creator of the thread can resolve** it.
-- When all threads are resolved and pipeline passed, the PR can be merged.
+- When all threads are resolved and pipeline passed, the PR can be merged by the author.
 
 ## Language
 
