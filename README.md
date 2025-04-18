@@ -53,6 +53,36 @@ npm run prettier
 npm run prettier:check
 ```
 
+## Environment Configuration
+
+This project uses environment variables for configuration. Create a `.env.development.local` file in the root directory for local development settings:
+
+```bash
+# Create .env.development.local file
+touch .env.development.local  # For Unix/Mac
+# OR
+echo. > .env.development.local  # For Windows PowerShell
+```
+
+### Environment Files
+
+The project supports different environment files:
+
+- `.env`: Default environment variables for all environments
+- `.env.local`: Local overrides for all environments (not committed to git)
+- `.env.development`: Development environment variables
+- `.env.development.local`: Local overrides for development (not committed to git)
+
+
+Example `.env.development.local` configuration:
+
+```
+VITE_API_URL=http://localhost:3000/api
+VITE_APP_TITLE=Crisis Web (Development)
+```
+
+**Note**: All environment variables used with Vite must be prefixed with `VITE_` to be exposed to your application.
+
 ## Contributing
 
 Please read our [contribution guidelines](https://github.com/InnovationProjectM1/crisis-web/blob/master/CONTRIBUTING.md) before submitting a pull request.
