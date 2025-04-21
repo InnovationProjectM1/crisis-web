@@ -2,7 +2,6 @@ pipeline {
     agent {
         docker {
             image 'node:18-alpine'
-            label 'docker-agent'
         }
     }
 
@@ -38,6 +37,13 @@ pipeline {
         stage('Build') {
             steps {
                 sh 'npm run build'
+            }
+        }
+
+        stage('Déploiement local') {
+            steps {
+                sh 'rm -rf /app/dist/*'
+                sh 'cp -r dist/* /app/dist/'
             }
         }
 
