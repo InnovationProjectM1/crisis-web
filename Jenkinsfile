@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage('📦 Installer les dépendances') {
             steps {
-                sh 'npm ci'
+                sh 'npm i'
             }
         }
 
@@ -31,7 +31,7 @@ pipeline {
 
         stage('🔍 Linter') {
             steps {
-                sh './node_modules/.bin/eslint .'
+                sh 'npm run lint'
             }
         }
 
