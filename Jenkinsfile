@@ -7,7 +7,6 @@ pipeline {
     }
 
     environment {
-        NODE_ENV = 'production'
         TARGET_DIST = '/app/dist'
         PATH = "./node_modules/.bin:$PATH"
 
@@ -19,14 +18,6 @@ pipeline {
     }
 
     stages {
-
-        stage('🧪 Debug Lockfile et Workspace') {
-            steps {
-                sh 'node -v'
-                sh 'npm -v'
-
-            }
-        }
 
         stage('📦 Installer les dépendances') {
             steps {
