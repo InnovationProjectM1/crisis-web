@@ -48,12 +48,18 @@ pipeline {
         // }
 
         stage('🏗️ Build') {
+            when {
+                branch 'master'
+            }
             steps {
                 sh 'npm run build'
             }
         }
 
         stage('📁 Déploiement local dans /app/dist') {
+            when {
+                branch 'master'
+            }
             steps {
                 script {
                     sh """
@@ -64,12 +70,11 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
         success {
-            echo '✅ Build + copie locale terminés avec succès.'
+            echo '✅ Pipeline terminé avec succès.'
         }
         failure {
             echo '❌ Échec du pipeline.'
