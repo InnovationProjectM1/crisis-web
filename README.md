@@ -73,7 +73,6 @@ The project supports different environment files:
 - `.env.development`: Development environment variables
 - `.env.development.local`: Local overrides for development (not committed to git)
 
-
 Example `.env.development.local` configuration:
 
 ```
