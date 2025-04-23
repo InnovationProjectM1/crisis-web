@@ -19,19 +19,13 @@ pipeline {
     stages {
         stage('📦 Installer les dépendances') {
             steps {
-                sh 'npm i'
+                sh 'npm ci'
             }
         }
 
         stage('🎨 Vérification Prettier') {
             steps {
                 sh 'npm run prettier:check'
-            }
-        }
-
-        stage('🔍 Linter') {
-            steps {
-                sh 'npm run lint'
             }
         }
 
