@@ -31,7 +31,7 @@ pipeline {
 
         stage('🔍 Linter') {
             steps {
-                sh 'npm run lint'
+                sh './node_modules/.bin/eslint .'
             }
         }
 
