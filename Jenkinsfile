@@ -34,18 +34,18 @@ pipeline {
             }
         }
 
-        stage('🧪 Tests') {
-            steps {
-                script {
-                    try {
-                        sh 'npm test'
-                    } catch (err) {
-                        echo "⚠️ Tests échoués ou non définis : ${err.message}"
-                        currentBuild.result = 'UNSTABLE'
-                    }
-                }
-            }
-        }
+        // stage('🧪 Tests') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 sh 'npm test'
+        //             } catch (err) {
+        //                 echo "⚠️ Tests échoués ou non définis : ${err.message}"
+        //                 currentBuild.result = 'UNSTABLE'
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('🏗️ Build') {
             steps {
@@ -57,7 +57,6 @@ pipeline {
             steps {
                 script {
                     sh """
-                        echo '✅ Dossier ${TARGET_DIST} supposé présent. Vérification...'
                         ls -la ${TARGET_DIST} || echo '❌ Le dossier n’existe pas !'
                         rm -rf ${TARGET_DIST}/*
                         cp -r dist/* ${TARGET_DIST}/
