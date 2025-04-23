@@ -16,15 +16,11 @@ pipeline {
         timeout(time: 10, unit: 'MINUTES')
     }
 
-    stages {
+    environment {
+        PATH = "./node_modules/.bin:$PATH"
+    }
 
-        stage('🗂️ Où suis-je ?') {
-            steps {
-                sh 'pwd'
-                sh 'ls -la'
-                sh 'cat package.json || echo "❌ PAS DE package.json ICI"'
-            }
-        }
+    stages {
 
         stage('📦 Installer les dépendances') {
             steps {
