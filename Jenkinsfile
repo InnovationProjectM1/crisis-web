@@ -1,56 +1,80 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18-alpine'
-        }
+    agent any
+
+    tools {
+        nodejs 'nodejs'
     }
 
     environment {
         NODE_ENV = 'production'
+        TARGET_DIST = '/app/dist'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 10, unit: 'MINUTES')
     }
 
     stages {
-        stage('Installer les dépendances') {
+        stage('📦 Installer les dépendances') {
             steps {
-                sh 'npm install'
+                sh 'npm ci'
             }
         }
 
-        stage('Check Prettier') {
+        stage('🎨 Vérification Prettier') {
             steps {
                 sh 'npm run prettier:check'
             }
         }
 
-        stage('Lint') {
+        stage('🔍 Linter') {
             steps {
                 sh 'npm run lint'
             }
         }
 
-        stage('Tests') {
+        stage('🧪 Tests') {
             steps {
-                sh 'npm test || echo "⚠️ Aucun test défini ou test échoué."'
+                script {
+                    try {
+                        sh 'npm test'
+                    } catch (err) {
+                        echo "⚠️ Tests échoués ou non définis : ${err.message}"
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
             }
         }
 
-        stage('Build') {
+        stage('🏗️ Build') {
             steps {
                 sh 'npm run build'
             }
         }
 
-        stage('Déploiement local') {
+        stage('📁 Déploiement local dans /app/dist') {
             steps {
-                sh 'rm -rf /app/dist/*'
-                sh 'cp -r dist/* /app/dist/'
+                script {
+                    sh """
+                        mkdir -p ${TARGET_DIST}
+                        rm -rf ${TARGET_DIST}/*
+                        cp -r dist/* ${TARGET_DIST}/
+                    """
+                }
             }
         }
+    }
 
-        stage('Fin') {
-            steps {
-                echo '✅ Build terminé avec succès !'
-            }
+    post {
+        success {
+            echo '✅ Build + copie locale terminés avec succès.'
+        }
+        failure {
+            echo '❌ Échec du pipeline.'
+        }
+        always {
+            cleanWs()
         }
     }
 }
