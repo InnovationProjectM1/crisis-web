@@ -22,7 +22,7 @@ pipeline {
 
         stage('📦 Installer les dépendances') {
             steps {
-                sh 'npm i'
+                sh 'npm ci'
             }
         }
 
