@@ -9,15 +9,13 @@ pipeline {
     environment {
         NODE_ENV = 'production'
         TARGET_DIST = '/app/dist'
+        PATH = "./node_modules/.bin:$PATH"
+
     }
 
     options {
         timestamps()
         timeout(time: 10, unit: 'MINUTES')
-    }
-
-    environment {
-        PATH = "./node_modules/.bin:$PATH"
     }
 
     stages {
