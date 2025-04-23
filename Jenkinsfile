@@ -1,11 +1,6 @@
 pipeline {
-    
-    agent {
-        docker {
-            image 'node23-git'
-            args '-u root:root'
-        }
-    }
+
+    agent { label 'docker-agent' }
 
     tools {
         nodejs 'nodejs'
