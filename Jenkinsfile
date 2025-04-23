@@ -22,12 +22,8 @@ pipeline {
 
         stage('🧪 Debug Lockfile et Workspace') {
             steps {
-                sh 'pwd'
-                sh 'ls -la'
-                sh 'cat package-lock.json'
-                sh 'cat package.json'
-                sh 'echo "📦 Nombre de packages dans lockfile : $(grep name package-lock.json | wc -l)"'
-                sh 'git log -n 3 --oneline'
+                sh 'node -v'
+                sh 'npm -v'
 
             }
         }
