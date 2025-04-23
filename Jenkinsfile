@@ -1,5 +1,4 @@
 pipeline {
-
     agent { label 'docker-agent' }
 
     tools {
@@ -8,8 +7,6 @@ pipeline {
 
     environment {
         TARGET_DIST = '/app/dist'
-        PATH = "./node_modules/.bin:$PATH"
-
     }
 
     options {
