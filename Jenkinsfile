@@ -20,6 +20,16 @@ pipeline {
 
     stages {
 
+        stage('🧪 Debug Lockfile et Workspace') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
+                sh 'cat package-lock.json | head -n 20 || echo "❌ Lockfile non trouvé"'
+                sh 'cat package.json | head -n 20'
+                sh 'echo "📦 Nombre de packages dans lockfile : $(grep name package-lock.json | wc -l)"'
+            }
+        }
+
         stage('📦 Installer les dépendances') {
             steps {
                 sh 'npm ci'
