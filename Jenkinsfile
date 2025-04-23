@@ -17,6 +17,15 @@ pipeline {
     }
 
     stages {
+
+        stage('🗂️ Où suis-je ?') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
+                sh 'cat package.json || echo "❌ PAS DE package.json ICI"'
+            }
+        }
+
         stage('📦 Installer les dépendances') {
             steps {
                 sh 'npm ci'
@@ -26,6 +35,12 @@ pipeline {
         stage('🎨 Vérification Prettier') {
             steps {
                 sh 'npm run prettier:check'
+            }
+        }
+
+        stage('🔍 Linter') {
+            steps {
+                sh 'npm run lint'
             }
         }
 
