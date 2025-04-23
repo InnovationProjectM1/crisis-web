@@ -1,5 +1,11 @@
 pipeline {
-    agent any
+    
+    agent {
+        docker {
+            image 'node23-git'
+            args '-u root:root'
+        }
+    }
 
     tools {
         nodejs 'nodejs'
