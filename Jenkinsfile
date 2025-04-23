@@ -24,9 +24,11 @@ pipeline {
             steps {
                 sh 'pwd'
                 sh 'ls -la'
-                sh 'cat package-lock.json | head -n 20 || echo "❌ Lockfile non trouvé"'
-                sh 'cat package.json | head -n 20'
+                sh 'cat package-lock.json'
+                sh 'cat package.json'
                 sh 'echo "📦 Nombre de packages dans lockfile : $(grep name package-lock.json | wc -l)"'
+                sh 'git log -n 3 --oneline'
+
             }
         }
 
