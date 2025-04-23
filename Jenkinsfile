@@ -57,13 +57,15 @@ pipeline {
             steps {
                 script {
                     sh """
-                        mkdir -p ${TARGET_DIST}
+                        echo '✅ Dossier ${TARGET_DIST} supposé présent. Vérification...'
+                        ls -la ${TARGET_DIST} || echo '❌ Le dossier n’existe pas !'
                         rm -rf ${TARGET_DIST}/*
                         cp -r dist/* ${TARGET_DIST}/
                     """
                 }
             }
         }
+
     }
 
     post {
