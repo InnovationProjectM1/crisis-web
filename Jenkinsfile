@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'node:18-alpine'
+            image 'node:23-alpine'
             args '-u root:root'
         }
     }
@@ -21,6 +21,13 @@ pipeline {
     }
 
     stages {
+
+        stage('🔧 Setup Git') {
+            steps {
+                sh 'apk add --no-cache git'
+            }
+        }
+        
         stage('📦 Installer les dépendances') {
             steps {
                 sh 'npm ci'
