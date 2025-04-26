@@ -35,15 +35,11 @@ export function Sidebar({ open, setOpen, currentPage }: SidebarProps) {
           <div className="flex items-center gap-2 font-semibold text-lg">
           <span className="hidden sm:inline bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent">Crisis Monitor</span>
           </div>
-        </div>
-        <ScrollArea className="flex-1">
+        </div>        <ScrollArea className="flex-1">
           <nav className="px-2 py-4 space-y-1">
             <NavItems currentPage={currentPage} />
           </nav>
         </ScrollArea>
-        <div className="p-4 border-t">
-          <FilterSection />
-        </div>
       </aside>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -53,15 +49,11 @@ export function Sidebar({ open, setOpen, currentPage }: SidebarProps) {
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <span>Crisis Monitor</span>
             </div>
-          </div>
-          <ScrollArea className="flex-1 h-[calc(100vh-8rem)]">
+          </div>          <ScrollArea className="flex-1 h-[calc(100vh-8rem)]">
             <nav className="px-2 py-4 space-y-1">
               <NavItems currentPage={currentPage} />
             </nav>
           </ScrollArea>
-          <div className="p-4 border-t">
-            <FilterSection />
-          </div>
         </SheetContent>
       </Sheet>
     </>
@@ -92,18 +84,11 @@ function NavItems({ currentPage }: NavItemsProps) {
         label="Resource Map"
         href="/resource-map"
         active={currentPage === "Resource Map"}
-      />
-      <NavItem
+      />      <NavItem
         icon={<BarChart4 />}
         label="Trends"
         href="/trends"
         active={currentPage === "Trends"}
-      />
-      <NavItem
-        icon={<Settings />}
-        label="Settings"
-        href="/settings"
-        active={currentPage === "Settings"}
       />
     </>
   );
