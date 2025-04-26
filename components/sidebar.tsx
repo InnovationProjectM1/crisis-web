@@ -1,16 +1,23 @@
+"use client";
+
 import type React from "react";
 
+import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   AlertTriangle,
   BarChart4,
+  Bell,
+  Filter,
   Home,
   MapPin,
   MessageSquare,
   Settings,
+  SlidersHorizontal,
 } from "lucide-react";
 
 // Update the SidebarProps interface to include currentPage
@@ -26,16 +33,17 @@ export function Sidebar({ open, setOpen, currentPage }: SidebarProps) {
       <aside className="hidden lg:flex flex-col w-64 border-r bg-card">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 font-semibold text-lg">
-            <span className="hidden sm:inline bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent">
-              Crisis Monitor
-            </span>
+          <span className="hidden sm:inline bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent">Crisis Monitor</span>
           </div>
-        </div>{" "}
+        </div>
         <ScrollArea className="flex-1">
           <nav className="px-2 py-4 space-y-1">
             <NavItems currentPage={currentPage} />
           </nav>
         </ScrollArea>
+        <div className="p-4 border-t">
+          <FilterSection />
+        </div>
       </aside>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -45,12 +53,15 @@ export function Sidebar({ open, setOpen, currentPage }: SidebarProps) {
               <AlertTriangle className="h-5 w-5 text-destructive" />
               <span>Crisis Monitor</span>
             </div>
-          </div>{" "}
+          </div>
           <ScrollArea className="flex-1 h-[calc(100vh-8rem)]">
             <nav className="px-2 py-4 space-y-1">
               <NavItems currentPage={currentPage} />
             </nav>
           </ScrollArea>
+          <div className="p-4 border-t">
+            <FilterSection />
+          </div>
         </SheetContent>
       </Sheet>
     </>
@@ -69,7 +80,7 @@ function NavItems({ currentPage }: NavItemsProps) {
         label="Dashboard"
         href="/"
         active={!currentPage || currentPage === "Dashboard"}
-      />
+      />      
       <NavItem
         icon={<MessageSquare />}
         label="Tweet Analysis"
@@ -81,7 +92,7 @@ function NavItems({ currentPage }: NavItemsProps) {
         label="Resource Map"
         href="/resource-map"
         active={currentPage === "Resource Map"}
-      />{" "}
+      />
       <NavItem
         icon={<BarChart4 />}
         label="Trends"
@@ -90,9 +101,9 @@ function NavItems({ currentPage }: NavItemsProps) {
       />
       <NavItem
         icon={<Settings />}
-        label="API Test"
-        href="/api-test"
-        active={currentPage === "API Test"}
+        label="Settings"
+        href="/settings"
+        active={currentPage === "Settings"}
       />
     </>
   );
@@ -119,5 +130,50 @@ function NavItem({ icon, label, href, active }: NavItemProps) {
       {icon}
       {label}
     </Link>
+  );
+}
+
+function FilterSection() {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="space-y-3">
+      <Button
+        variant="outline"
+        className="w-full justify-start gap-2"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <Filter className="h-4 w-4" />
+        <span>Filters</span>
+      </Button>
+
+      {expanded && (
+        <div className="space-y-2 pt-2 pl-2">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="needs" className="rounded" />
+            <label htmlFor="needs" className="text-sm">
+              Needs
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="resources" className="rounded" />
+            <label htmlFor="resources" className="text-sm">
+              Resources
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="urgent" className="rounded" />
+            <label htmlFor="urgent" className="text-sm">
+              Urgent
+            </label>
+          </div>
+        </div>
+      )}
+
+      <Button variant="outline" className="w-full justify-start gap-2">
+        <SlidersHorizontal className="h-4 w-4" />
+        <span>Advanced Filters</span>
+      </Button>
+    </div>
   );
 }
