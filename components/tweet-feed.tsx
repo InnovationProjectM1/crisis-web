@@ -13,6 +13,7 @@ import {
   MapPin,
   ThumbsUp,
 } from "lucide-react";
+import { formatTweetTime } from "@/lib/date-utils";
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
@@ -82,7 +83,7 @@ function FeedTweet({ tweet, onClick }: FeedTweetProps) {
         <div className="font-medium">@{tweet.username}</div>
         <div className="flex items-center text-xs text-muted-foreground">
           <Clock className="h-3 w-3 mr-1" />
-          {formatTime(tweet.timestamp)}
+          {formatTweetTime(tweet.timestamp)}
         </div>
       </div>
 
@@ -375,21 +376,4 @@ interface Tweet {
   location: string;
   coordinates: { lat: number; lng: number };
   verified: boolean;
-}
-
-function formatTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) {
-    return "Just now";
-  } else if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  } else if (diffMins < 1440) {
-    return `${Math.floor(diffMins / 60)}h ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
 }

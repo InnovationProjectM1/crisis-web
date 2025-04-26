@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-
 import {
   Select,
   SelectContent,
@@ -9,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapContainer, TileLayer, useMapEvents, Popup, Marker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "leaflet.heat";
@@ -18,29 +16,13 @@ interface RegionalHeatmapProps {
   onRegionClick: (data: any) => void;
 }
 
-function HeatLayer({ points }: { points: [number, number, number][] }) {
-  const map = useMapEvents({});
-  const layerRef = useRef<L.Layer | null>(null);
-
-  useEffect(() => {
-    if (!map) return;
-    if (layerRef.current) {
-      map.removeLayer(layerRef.current);
-    }
-    // @ts-ignore
-    const heat = L.heatLayer(points, { radius: 30, blur: 20, max: 1 });
-    heat.addTo(map);
-    layerRef.current = heat;
-    return () => {
-      if (layerRef.current) {
-        map.removeLayer(layerRef.current);
-      }
-    };
-  }, [map, points]);
-  return null;
-}
-
 export function RegionalHeatmap({ onRegionClick }: RegionalHeatmapProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const heatLayerRef = useRef<L.Layer | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const popupRef = useRef<L.Popup | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  
   const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dataType, setDataType] = useState("needs");
@@ -76,41 +58,145 @@ export function RegionalHeatmap({ onRegionClick }: RegionalHeatmapProps) {
     loadHeatmapData();
   }, []);
 
-  // Prepare heatmap points
-  const points: [number, number, number][] = Array.isArray(heatmapData?.regions)
-    ? heatmapData!.regions.map(region => [
-        region.lat,
-        region.lng,
-        dataType === "needs" ? region.needsIntensity : region.resourcesIntensity,
-      ])
-    : [];
-
-  // Click handler for map
-  function RegionClickHandler() {
-    useMapEvents({
-      click(e: any) {
-        if (!heatmapData) return;
-        let minDist = Infinity;
-        let closest = null;
-        for (const region of heatmapData.regions) {
-          const dist = Math.sqrt(
-            Math.pow(region.lat - e.latlng.lat, 2) + Math.pow(region.lng - e.latlng.lng, 2)
-          );
-          if (dist < minDist) {
-            minDist = dist;
-            closest = region;
-          }
-        }
-        if (closest && minDist < 0.01) {
-          setSelectedRegion(closest);
-          onRegionClick(closest);
-        } else {
-          setSelectedRegion(null);
-        }
-      },
+  // Initialisation de la carte
+  useEffect(() => {
+    // Ne pas initialiser la carte si le conteneur n'est pas prêt ou si les données chargent
+    if (!mapContainerRef.current || loading) return;
+    
+    // Nettoyer la carte existante si elle existe
+    if (mapRef.current) {
+      mapRef.current.remove();
+      mapRef.current = null;
+      heatLayerRef.current = null;
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+      }
+      if (popupRef.current) {
+        popupRef.current.remove();
+        popupRef.current = null;
+      }
+    }
+    
+    // Créer une nouvelle carte
+    const map = L.map(mapContainerRef.current, {
+      center: [48.846, 2.3522],
+      zoom: 11,
+      scrollWheelZoom: false
     });
-    return null;
-  }
+    
+    // Ajouter la couche de tuiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Stocker la référence à la carte
+    mapRef.current = map;
+    
+    // Gérer les clics sur la carte
+    map.on('click', (e) => {
+      if (!heatmapData) return;
+      
+      let minDist = Infinity;
+      let closest = null;
+      
+      for (const region of heatmapData.regions) {
+        const dist = Math.sqrt(
+          Math.pow(region.lat - e.latlng.lat, 2) + Math.pow(region.lng - e.latlng.lng, 2)
+        );
+        if (dist < minDist) {
+          minDist = dist;
+          closest = region;
+        }
+      }
+      
+      if (closest && minDist < 0.01) {
+        setSelectedRegion(closest);
+        onRegionClick(closest);
+      } else {
+        setSelectedRegion(null);
+      }
+    });
+    
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [loading, heatmapData, onRegionClick]);
+  
+  // Préparer les points pour la heatmap
+  useEffect(() => {
+    if (!mapRef.current || !heatmapData?.regions || loading) return;
+    
+    // Supprimer la couche de chaleur existante si elle existe
+    if (heatLayerRef.current) {
+      mapRef.current.removeLayer(heatLayerRef.current);
+      heatLayerRef.current = null;
+    }
+    
+    // Créer les points pour la heatmap
+    const points = heatmapData.regions.map(region => [
+      region.lat,
+      region.lng,
+      dataType === "needs" ? region.needsIntensity : region.resourcesIntensity
+    ] as [number, number, number]);
+    
+    // Créer et ajouter la couche de chaleur
+    // @ts-ignore - L'extension leaflet.heat n'a pas de types TS corrects
+    const heatLayer = L.heatLayer(points, { radius: 30, blur: 20, max: 1 });
+    heatLayer.addTo(mapRef.current);
+    
+    // Stocker la référence à la couche de chaleur
+    heatLayerRef.current = heatLayer;
+  }, [heatmapData, dataType, loading]);
+  
+  // Gérer la région sélectionnée
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    // Supprimer le marker et le popup existant
+    if (markerRef.current) {
+      markerRef.current.remove();
+      markerRef.current = null;
+    }
+    if (popupRef.current) {
+      popupRef.current.remove();
+      popupRef.current = null;
+    }
+    
+    // Si une région est sélectionnée, afficher un popup
+    if (selectedRegion) {
+      // Créer le contenu du popup
+      const popupContent = document.createElement('div');
+      popupContent.className = 'p-2 min-w-[140px]';
+      
+      const nameElement = document.createElement('div');
+      nameElement.className = 'font-semibold text-sm mb-1';
+      nameElement.textContent = selectedRegion.name;
+      popupContent.appendChild(nameElement);
+      
+      const infoElement = document.createElement('div');
+      infoElement.className = 'text-xs text-muted-foreground';
+      infoElement.textContent = dataType === "needs"
+        ? `Needs Intensity: ${(selectedRegion.needsIntensity * 100).toFixed(0)}%`
+        : `Resources Intensity: ${(selectedRegion.resourcesIntensity * 100).toFixed(0)}%`;
+      popupContent.appendChild(infoElement);
+      
+      // Créer et ajouter le popup
+      const popup = L.popup({
+        autoPan: false,
+        closeButton: false,
+        className: '!p-0'
+      })
+        .setLatLng([selectedRegion.lat, selectedRegion.lng])
+        .setContent(popupContent)
+        .openOn(mapRef.current);
+      
+      popupRef.current = popup;
+    }
+  }, [selectedRegion, dataType]);
 
   return (
     <div className="h-[400px] flex flex-col">
@@ -133,44 +219,10 @@ export function RegionalHeatmap({ onRegionClick }: RegionalHeatmapProps) {
           </div>
         ) : (
           <div className="w-full h-full relative">
-            <MapContainer
-              {...({
-                center: [48.846, 2.3522],
-                zoom: 11,
-                style: { width: "100%", height: "100%", zIndex: 0 },
-                scrollWheelZoom: false,
-                children: [
-                  <TileLayer
-                    key="tile"
-                    {...({
-                      attribution: "&copy; OpenStreetMap contributors",
-                      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    } as any)}
-                  />, 
-                  <HeatLayer key="heat" points={points} />, 
-                  <RegionClickHandler key="click" />, 
-                  // Affiche un marker invisible avec popup sur la région sélectionnée
-                  selectedRegion && (
-                    <Marker
-                      key={selectedRegion.id}
-                      position={[selectedRegion.lat, selectedRegion.lng]}
-                      opacity={0}
-                      interactive={false}
-                    >
-                      <Popup autoPan={false} closeButton={false} className="!p-0">
-                        <div className="p-2 min-w-[140px]">
-                          <div className="font-semibold text-sm mb-1">{selectedRegion.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {dataType === "needs"
-                              ? `Needs Intensity: ${(selectedRegion.needsIntensity * 100).toFixed(0)}%`
-                              : `Resources Intensity: ${(selectedRegion.resourcesIntensity * 100).toFixed(0)}%`}
-                          </div>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ),
-                ],
-              } as any)}
+            <div 
+              ref={mapContainerRef}
+              className="w-full h-full"
+              style={{ zIndex: 0 }}
             />
             {/* Légende Heatmap, animée */}
             <div className="absolute left-4 bottom-4 z-[1000] flex flex-col items-start gap-1 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow text-xs pointer-events-auto animate-fade-in">
