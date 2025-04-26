@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,19 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  AlertTriangle,
-  Bell,
-  Download,
-  LogOut,
-  Menu,
-  Plus,
-  RefreshCw,
-  Search,
-  Settings,
-  User,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { LogOut, Menu, Search } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,9 +26,6 @@ interface HeaderProps {
 export function Header({ setSidebarOpen, title }: HeaderProps) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
-  const [isLive, setIsLive] = useState(true);
-  const [notifications, setNotifications] = useState(3);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/signin" });
@@ -72,7 +56,12 @@ export function Header({ setSidebarOpen, title }: HeaderProps) {
           <span className="sr-only">Toggle sidebar</span>
         </Button>
         {title && (
-          <span className="ml-4 truncate text-xl font-semibold text-ellipsis max-w-[180px] md:max-w-xs" title={title}>{title}</span>
+          <span
+            className="ml-4 truncate text-xl font-semibold text-ellipsis max-w-[180px] md:max-w-xs"
+            title={title}
+          >
+            {title}
+          </span>
         )}
       </div>
       {/* Search bar only */}
@@ -91,30 +80,24 @@ export function Header({ setSidebarOpen, title }: HeaderProps) {
         <Toggle
           aria-label="Activer/désactiver le mode sombre"
           pressed={theme === "dark"}
-          onPressedChange={checked => setTheme(checked ? "dark" : "light")}
-          className={
-            cn(
-              "relative flex items-center justify-center w-10 h-10 rounded-full border border-border bg-muted transition-colors duration-200 shadow hover:bg-accent group",
-              theme === "dark" ? "ring-2 ring-yellow-400" : "ring-0"
-            )
-          }
+          onPressedChange={(checked) => setTheme(checked ? "dark" : "light")}
+          className={cn(
+            "relative flex items-center justify-center w-10 h-10 rounded-full border border-border bg-muted transition-colors duration-200 shadow hover:bg-accent group",
+            theme === "dark" ? "ring-2 ring-yellow-400" : "ring-0",
+          )}
         >
           <span className="sr-only">Toggle dark mode</span>
           <Sun
-            className={
-              cn(
-                "absolute transition-all duration-300 h-5 w-5 text-orange-400 scale-100 group-data-[state=on]:scale-0 group-data-[state=on]:opacity-0",
-                theme === "dark" && "scale-0 opacity-0"
-              )
-            }
+            className={cn(
+              "absolute transition-all duration-300 h-5 w-5 text-orange-400 scale-100 group-data-[state=on]:scale-0 group-data-[state=on]:opacity-0",
+              theme === "dark" && "scale-0 opacity-0",
+            )}
           />
           <Moon
-            className={
-              cn(
-                "absolute transition-all duration-300 h-5 w-5 text-yellow-400 scale-0 opacity-0 group-data-[state=on]:scale-100 group-data-[state=on]:opacity-100",
-                theme === "dark" && "scale-100 opacity-100"
-              )
-            }
+            className={cn(
+              "absolute transition-all duration-300 h-5 w-5 text-yellow-400 scale-0 opacity-0 group-data-[state=on]:scale-100 group-data-[state=on]:opacity-100",
+              theme === "dark" && "scale-100 opacity-100",
+            )}
           />
         </Toggle>
         <DropdownMenu>
@@ -143,7 +126,9 @@ export function Header({ setSidebarOpen, title }: HeaderProps) {
                 <p className="text-xs leading-none text-muted-foreground">
                   {session?.user?.email}
                 </p>
-                <span className="text-xs text-green-600 font-semibold">Online</span>
+                <span className="text-xs text-green-600 font-semibold">
+                  Online
+                </span>
                 <span className="text-xs text-muted-foreground">Operator</span>
               </div>
             </DropdownMenuLabel>

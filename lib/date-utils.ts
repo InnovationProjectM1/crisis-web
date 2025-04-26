@@ -1,5 +1,10 @@
 // lib/date-utils.ts
-import { format, formatDistance, differenceInMinutes, differenceInHours, differenceInDays, addDays, subDays, subHours } from "date-fns";
+import {
+  format,
+  differenceInMinutes,
+  differenceInHours,
+  differenceInDays,
+} from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 
 /**
@@ -26,7 +31,11 @@ export const LOCALES = {
 /**
  * Formater une date selon un format standard ou personnalisé
  */
-export function formatDate(date: Date | string | number, formatStr = DATE_FORMATS.medium, locale = LOCALES.fr) {
+export function formatDate(
+  date: Date | string | number,
+  formatStr = DATE_FORMATS.medium,
+  locale = LOCALES.fr,
+) {
   const dateObj = date instanceof Date ? date : new Date(date);
   return format(dateObj, formatStr, { locale });
 }
@@ -37,19 +46,19 @@ export function formatDate(date: Date | string | number, formatStr = DATE_FORMAT
 export function formatRelativeTime(date: Date | string | number): string {
   const dateObj = date instanceof Date ? date : new Date(date);
   const now = new Date();
-  
+
   const diffMinutes = differenceInMinutes(now, dateObj);
   const diffHours = differenceInHours(now, dateObj);
   const diffDays = differenceInDays(now, dateObj);
-  
+
   if (diffMinutes < 1) {
     return "À l'instant";
   } else if (diffMinutes < 60) {
-    return `Il y a ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+    return `Il y a ${diffMinutes} minute${diffMinutes > 1 ? "s" : ""}`;
   } else if (diffHours < 24) {
-    return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+    return `Il y a ${diffHours} heure${diffHours > 1 ? "s" : ""}`;
   } else if (diffDays < 30) {
-    return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+    return `Il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`;
   } else {
     return formatDate(dateObj);
   }

@@ -12,14 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Download } from "lucide-react";
-import { formatDate, DATE_FORMATS } from "@/lib/date-utils";
-import { TrendChart } from "./trend-chart";
+import { Download } from "lucide-react";
+import { DATE_FORMATS } from "@/lib/date-utils";
 import { RegionalHeatmap } from "./regional-heatmap";
 import {
   LineChart,
@@ -51,11 +45,17 @@ function generateTimeData(values: number[]): ChartData[] {
 }
 
 // Tooltip component with proper type definition
-const SimpleTooltip = ({ active, payload }: { active?: boolean; payload?: Array<any> }) => {
+const SimpleTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<ChartData>;
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-background border p-2 rounded text-xs shadow-sm">
-        <p className="font-medium">{payload[0].payload.name}</p>
+        <p className="font-medium">{payload[0].name}</p>
         <p>Value: {payload[0].value}</p>
       </div>
     );
@@ -72,7 +72,13 @@ interface MiniChartProps {
   changeType?: "positive" | "negative" | "neutral";
 }
 
-function MiniChart({ data, title, value, change, changeType = "neutral" }: MiniChartProps) {
+function MiniChart({
+  data,
+  title,
+  value,
+  change,
+  changeType = "neutral",
+}: MiniChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -81,11 +87,15 @@ function MiniChart({ data, title, value, change, changeType = "neutral" }: MiniC
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {change && (
-          <p className={`text-xs ${
-            changeType === "positive" ? "text-green-500" : 
-            changeType === "negative" ? "text-red-500" : 
-            "text-muted-foreground"
-          }`}>
+          <p
+            className={`text-xs ${
+              changeType === "positive"
+                ? "text-green-500"
+                : changeType === "negative"
+                  ? "text-red-500"
+                  : "text-muted-foreground"
+            }`}
+          >
             {change}
           </p>
         )}
@@ -100,18 +110,22 @@ function MiniChart({ data, title, value, change, changeType = "neutral" }: MiniC
                   <stop
                     offset="5%"
                     stopColor={
-                      changeType === "positive" ? "#22C55E" : 
-                      changeType === "negative" ? "#EF4444" : 
-                      "#3b82f6"
+                      changeType === "positive"
+                        ? "#22C55E"
+                        : changeType === "negative"
+                          ? "#EF4444"
+                          : "#3b82f6"
                     }
                     stopOpacity={0.1}
                   />
                   <stop
                     offset="95%"
                     stopColor={
-                      changeType === "positive" ? "#22C55E" : 
-                      changeType === "negative" ? "#EF4444" : 
-                      "#3b82f6"
+                      changeType === "positive"
+                        ? "#22C55E"
+                        : changeType === "negative"
+                          ? "#EF4444"
+                          : "#3b82f6"
                     }
                     stopOpacity={0.0}
                   />
@@ -121,9 +135,11 @@ function MiniChart({ data, title, value, change, changeType = "neutral" }: MiniC
                 type="monotone"
                 dataKey="value"
                 stroke={
-                  changeType === "positive" ? "#22C55E" : 
-                  changeType === "negative" ? "#EF4444" : 
-                  "#3b82f6"
+                  changeType === "positive"
+                    ? "#22C55E"
+                    : changeType === "negative"
+                      ? "#EF4444"
+                      : "#3b82f6"
                 }
                 fill="url(#colorValue)"
                 strokeWidth={2}
@@ -141,7 +157,7 @@ export function TrendsAnalysis() {
   const [timeRange, setTimeRange] = useState("24h");
   const [chartType, setChartType] = useState<"line" | "bar">("line");
   const [date, setDate] = useState<Date | undefined>(new Date());
-  
+
   // Mémoriser les données générées pour éviter les re-calculs inutiles
   const chartData = useMemo(() => {
     // Ces données seraient normalement chargées à partir d'une API
@@ -149,7 +165,7 @@ export function TrendsAnalysis() {
       needs: generateTimeData([12, 15, 18, 14, 11, 19, 22]),
       resources: generateTimeData([8, 11, 14, 17, 16, 14, 12]),
       alerts: generateTimeData([5, 7, 4, 9, 8, 6, 3]),
-      responseTime: generateTimeData([45, 40, 38, 42, 36, 33, 30])
+      responseTime: generateTimeData([45, 40, 38, 42, 36, 33, 30]),
     };
   }, []);
 
@@ -179,28 +195,28 @@ export function TrendsAnalysis() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MiniChart 
+        <MiniChart
           data={chartData.needs}
           title="Reported Needs"
           value="128"
           change="+14% from last period"
           changeType="positive"
         />
-        <MiniChart 
+        <MiniChart
           data={chartData.resources}
           title="Available Resources"
           value="85"
           change="-5% from last period"
           changeType="negative"
         />
-        <MiniChart 
+        <MiniChart
           data={chartData.alerts}
           title="Active Alerts"
           value="24"
           change="No change from last period"
           changeType="neutral"
         />
-        <MiniChart 
+        <MiniChart
           data={chartData.responseTime}
           title="Avg. Response Time (min)"
           value="36"
@@ -212,7 +228,9 @@ export function TrendsAnalysis() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="col-span-2 md:col-span-1">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-medium">Trend Over Time</CardTitle>
+            <CardTitle className="text-base font-medium">
+              Trend Over Time
+            </CardTitle>
             <div className="flex items-center gap-2">
               <Select
                 defaultValue={timeRange}
@@ -263,9 +281,24 @@ export function TrendsAnalysis() {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey="needs" stroke="#ef4444" strokeWidth={2} />
-                    <Line type="monotone" dataKey="resources" stroke="#3b82f6" strokeWidth={2} />
-                    <Line type="monotone" dataKey="alerts" stroke="#f59e0b" strokeWidth={2} />
+                    <Line
+                      type="monotone"
+                      dataKey="needs"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="resources"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="alerts"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                    />
                   </LineChart>
                 ) : (
                   <BarChart
@@ -296,14 +329,16 @@ export function TrendsAnalysis() {
 
         <Card className="col-span-2 md:col-span-1">
           <CardContent className=" mt-4">
-              <RegionalHeatmap/>
+            <RegionalHeatmap />
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium">Category Analysis</CardTitle>
+          <CardTitle className="text-base font-medium">
+            Category Analysis
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="needs">
