@@ -32,6 +32,168 @@ import {
   ThumbsUp,
 } from "lucide-react";
 
+// Composants réutilisables pour réduire la duplication de code
+interface CategoryBadgeProps {
+  category: "need" | "resource" | "alert";
+  className?: string;
+}
+
+function CategoryBadge({ category, className = "" }: CategoryBadgeProps) {
+  const variant = 
+    category === "need" 
+      ? "destructive" 
+      : category === "resource" 
+        ? "default" 
+        : "outline";
+  
+  return (
+    <Badge variant={variant} className={`text-xs px-1.5 py-0 h-5 ${className}`}>
+      {category.charAt(0).toUpperCase() + category.slice(1)}
+    </Badge>
+  );
+}
+
+interface UrgencyBadgeProps {
+  isUrgent: boolean;
+  className?: string;
+}
+
+function UrgencyBadge({ isUrgent, className = "" }: UrgencyBadgeProps) {
+  if (!isUrgent) return null;
+  
+  return (
+    <Badge variant="outline" className={`bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5 ${className}`}>
+      <AlertTriangle className="h-3 w-3 mr-1" />
+      Urgent
+    </Badge>
+  );
+}
+
+interface VerifiedBadgeProps {
+  isVerified: boolean;
+  className?: string;
+}
+
+function VerifiedBadge({ isVerified, className = "" }: VerifiedBadgeProps) {
+  if (!isVerified) return null;
+  
+  return (
+    <Badge variant="outline" className={`bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5 ${className}`}>
+      <ThumbsUp className="h-3 w-3 mr-1" />
+      Verified
+    </Badge>
+  );
+}
+
+interface TweetCardProps {
+  tweet: Tweet;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+function TweetCard({ tweet, isSelected, onClick }: TweetCardProps) {
+  return (
+    <div
+      className={`p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${isSelected ? "border-primary" : ""}`}
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between mb-1">
+        <div className="font-medium">@{tweet.username}</div>
+        <div className="flex items-center text-xs text-muted-foreground">
+          <Clock className="h-3 w-3 mr-1" />
+          {formatTime(tweet.timestamp)}
+        </div>
+      </div>
+
+      <p className="text-sm mb-2">{tweet.text}</p>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <CategoryBadge category={tweet.category} />
+          <UrgencyBadge isUrgent={tweet.urgency === "high"} />
+          <VerifiedBadge isVerified={tweet.verified} />
+        </div>
+
+        <div className="flex items-center text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3 mr-1" />
+          {tweet.location}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface ChartContainerProps {
+  barData: Array<{ name: string; value: number }>;
+  pieData: Array<{ name: string; value: number }>;
+  barDataKey: string;
+  barFill?: string;
+  colors: string[];
+  vertical?: boolean;
+}
+
+function ChartContainer({ 
+  barData, 
+  pieData, 
+  barDataKey,
+  barFill = "#8884d8",
+  colors,
+  vertical = false 
+}: ChartContainerProps) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+      <ResponsiveContainer width="100%" height="100%">
+        {vertical ? (
+          <BarChart
+            layout="vertical"
+            data={barData}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" />
+            <YAxis dataKey="name" type="category" width={80} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey={barDataKey} fill={barFill} />
+          </BarChart>
+        ) : (
+          <BarChart
+            data={barData}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey={barDataKey} fill={barFill} />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={pieData}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="value"
+            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+          >
+            {pieData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function TweetAnalysis() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,55 +277,37 @@ export function TweetAnalysis() {
     setSelectedTweet(tweet);
   };
 
-  // Calculate statistics
-  const needsCount = tweets.filter((t) => t.category === "need").length;
-  const resourcesCount = tweets.filter((t) => t.category === "resource").length;
-  const alertsCount = tweets.filter((t) => t.category === "alert").length;
-
-  const urgentCount = tweets.filter((t) => t.urgency === "high").length;
-  const verifiedCount = tweets.filter((t) => t.verified).length;
+  // Calculer les statistiques une seule fois au lieu de multiples appels filter redondants
+  const statistics = {
+    needsCount: tweets.filter((t) => t.category === "need").length,
+    resourcesCount: tweets.filter((t) => t.category === "resource").length,
+    alertsCount: tweets.filter((t) => t.category === "alert").length,
+    urgentCount: tweets.filter((t) => t.urgency === "high").length,
+    verifiedCount: tweets.filter((t) => t.verified).length,
+  };
 
   const categoryData = [
-    { name: "Needs", value: needsCount },
-    { name: "Resources", value: resourcesCount },
-    { name: "Alerts", value: alertsCount },
+    { name: "Needs", value: statistics.needsCount },
+    { name: "Resources", value: statistics.resourcesCount },
+    { name: "Alerts", value: statistics.alertsCount },
   ];
 
   const urgencyData = [
     { name: "High", value: tweets.filter((t) => t.urgency === "high").length },
-    {
-      name: "Medium",
-      value: tweets.filter((t) => t.urgency === "medium").length,
-    },
+    { name: "Medium", value: tweets.filter((t) => t.urgency === "medium").length },
     { name: "Low", value: tweets.filter((t) => t.urgency === "low").length },
   ];
 
-  const locationData = [
-    {
-      name: "North",
-      value: tweets.filter((t) => t.location.includes("North")).length,
-    },
-    {
-      name: "South",
-      value: tweets.filter((t) => t.location.includes("South")).length,
-    },
-    {
-      name: "East",
-      value: tweets.filter((t) => t.location.includes("East")).length,
-    },
-    {
-      name: "West",
-      value: tweets.filter((t) => t.location.includes("West")).length,
-    },
-    {
-      name: "Central",
-      value: tweets.filter((t) => t.location.includes("Central")).length,
-    },
-    {
-      name: "Downtown",
-      value: tweets.filter((t) => t.location.includes("Downtown")).length,
-    },
-  ].sort((a, b) => b.value - a.value);
+  // Calcul optimisé pour éviter de filtrer plusieurs fois
+  const locationCounts = tweets.reduce((acc, tweet) => {
+    const location = tweet.location.split(' ')[0]; // Extraire la partie Nord, Sud, etc.
+    acc[location] = (acc[location] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const locationData = Object.entries(locationCounts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
 
   const COLORS = [
     "#0088FE",
@@ -206,15 +350,15 @@ export function TweetAnalysis() {
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{needsCount}</div>
+                <div className="text-2xl font-bold">{statistics.needsCount}</div>
                 <div className="text-xs text-muted-foreground">Needs</div>
               </div>
               <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{resourcesCount}</div>
+                <div className="text-2xl font-bold">{statistics.resourcesCount}</div>
                 <div className="text-xs text-muted-foreground">Resources</div>
               </div>
               <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{alertsCount}</div>
+                <div className="text-2xl font-bold">{statistics.alertsCount}</div>
                 <div className="text-xs text-muted-foreground">Alerts</div>
               </div>
             </div>
@@ -222,13 +366,13 @@ export function TweetAnalysis() {
             <div className="grid grid-cols-2 gap-2 mb-4">
               <div className="flex flex-col items-center justify-center p-3 bg-red-500/10 rounded-lg">
                 <div className="text-2xl font-bold text-red-500">
-                  {urgentCount}
+                  {statistics.urgentCount}
                 </div>
                 <div className="text-xs text-muted-foreground">Urgent</div>
               </div>
               <div className="flex flex-col items-center justify-center p-3 bg-green-500/10 rounded-lg">
                 <div className="text-2xl font-bold text-green-500">
-                  {verifiedCount}
+                  {statistics.verifiedCount}
                 </div>
                 <div className="text-xs text-muted-foreground">Verified</div>
               </div>
@@ -246,66 +390,12 @@ export function TweetAnalysis() {
                   </div>
                 ) : (
                   filteredTweets.map((tweet) => (
-                    <div
+                    <TweetCard
                       key={tweet.id}
-                      className={`p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors ${
-                        selectedTweet?.id === tweet.id ? "border-primary" : ""
-                      }`}
+                      tweet={tweet}
+                      isSelected={selectedTweet?.id === tweet.id}
                       onClick={() => handleTweetClick(tweet)}
-                    >
-                      <div className="flex items-start justify-between mb-1">
-                        <div className="font-medium">@{tweet.username}</div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {formatTime(tweet.timestamp)}
-                        </div>
-                      </div>
-
-                      <p className="text-sm mb-2">{tweet.text}</p>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <Badge
-                            variant={
-                              tweet.category === "need"
-                                ? "destructive"
-                                : tweet.category === "resource"
-                                  ? "default"
-                                  : "outline"
-                            }
-                            className="text-xs px-1.5 py-0 h-5"
-                          >
-                            {tweet.category.charAt(0).toUpperCase() +
-                              tweet.category.slice(1)}
-                          </Badge>
-
-                          {tweet.urgency === "high" && (
-                            <Badge
-                              variant="outline"
-                              className="bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5"
-                            >
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Urgent
-                            </Badge>
-                          )}
-
-                          {tweet.verified && (
-                            <Badge
-                              variant="outline"
-                              className="bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5"
-                            >
-                              <ThumbsUp className="h-3 w-3 mr-1" />
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {tweet.location}
-                        </div>
-                      </div>
-                    </div>
+                    />
                   ))
                 )}
               </div>
@@ -334,39 +424,9 @@ export function TweetAnalysis() {
                     <p className="text-sm mb-2">{selectedTweet.text}</p>
 
                     <div className="flex items-center gap-1.5">
-                      <Badge
-                        variant={
-                          selectedTweet.category === "need"
-                            ? "destructive"
-                            : selectedTweet.category === "resource"
-                              ? "default"
-                              : "outline"
-                        }
-                        className="text-xs px-1.5 py-0 h-5"
-                      >
-                        {selectedTweet.category.charAt(0).toUpperCase() +
-                          selectedTweet.category.slice(1)}
-                      </Badge>
-
-                      {selectedTweet.urgency === "high" && (
-                        <Badge
-                          variant="outline"
-                          className="bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5"
-                        >
-                          <AlertTriangle className="h-3 w-3 mr-1" />
-                          Urgent
-                        </Badge>
-                      )}
-
-                      {selectedTweet.verified && (
-                        <Badge
-                          variant="outline"
-                          className="bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5"
-                        >
-                          <ThumbsUp className="h-3 w-3 mr-1" />
-                          Verified
-                        </Badge>
-                      )}
+                      <CategoryBadge category={selectedTweet.category} />
+                      <UrgencyBadge isUrgent={selectedTweet.urgency === "high"} />
+                      <VerifiedBadge isVerified={selectedTweet.verified} />
                     </div>
                   </div>
 
@@ -449,126 +509,33 @@ export function TweetAnalysis() {
 
             <div className="mt-4 h-[300px]">
               <TabsContent value="category" className="h-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#8884d8" name="Count" />
-                    </BarChart>
-                  </ResponsiveContainer>
-
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <ChartContainer 
+                  barData={categoryData} 
+                  pieData={categoryData} 
+                  barDataKey="value" 
+                  colors={COLORS}
+                />
               </TabsContent>
 
               <TabsContent value="urgency" className="h-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={urgencyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#ff8042" name="Count" />
-                    </BarChart>
-                  </ResponsiveContainer>
-
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={urgencyData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {urgencyData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <ChartContainer 
+                  barData={urgencyData} 
+                  pieData={urgencyData} 
+                  barDataKey="value" 
+                  barFill="#ff8042"
+                  colors={COLORS}
+                />
               </TabsContent>
 
               <TabsContent value="location" className="h-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={locationData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={80} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#00c49f" name="Count" />
-                    </BarChart>
-                  </ResponsiveContainer>
-
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={locationData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {locationData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <ChartContainer 
+                  barData={locationData} 
+                  pieData={locationData} 
+                  barDataKey="value" 
+                  barFill="#00c49f"
+                  vertical={true}
+                  colors={COLORS}
+                />
               </TabsContent>
             </div>
           </Tabs>
