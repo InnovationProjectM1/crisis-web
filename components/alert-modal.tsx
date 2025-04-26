@@ -12,10 +12,56 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, MapPin, MessageSquare, ThumbsUp } from "lucide-react";
 
+interface TweetData {
+  id: string;
+  username: string;
+  text: string;
+  timestamp: string;
+  location: string;
+  category: string;
+  urgency: string;
+  verified: boolean;
+}
+
+interface Resource {
+  type: string;
+  urgency: string;
+  count: number;
+}
+
+// Using Resource type as Need since they have the same structure
+type Need = Resource;
+
+interface RegionData {
+  name: string;
+  needs: Need[];
+  resources: Resource[];
+}
+
+interface IncidentData {
+  id: string;
+  type: string;
+  severity: string;
+  coordinates: {
+    x: number;
+    y: number;
+  };
+}
+
+interface HeatmapRegionData {
+  name: string;
+  intensity: number;
+}
+
+interface AlertData {
+  type: "tweet" | "region" | "incident" | "heatmap_region";
+  data: TweetData | RegionData | IncidentData | HeatmapRegionData;
+}
+
 interface AlertModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  data: any;
+  data: AlertData | null;
 }
 
 export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
@@ -27,9 +73,11 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
         <DialogHeader>
           <DialogTitle>
             {data.type === "tweet" && "Tweet Details"}
-            {data.type === "region" && `${data.data.name} Details`}
+            {data.type === "region" &&
+              `${(data.data as RegionData).name} Details`}
             {data.type === "incident" && "Incident Details"}
-            {data.type === "heatmap_region" && `${data.data.name} Intensity`}
+            {data.type === "heatmap_region" &&
+              `${(data.data as HeatmapRegionData).name} Intensity`}
           </DialogTitle>
           <DialogDescription>
             {data.type === "tweet" && "Detailed information about this tweet"}
@@ -37,39 +85,40 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
               "Resource and needs information for this region"}
             {data.type === "incident" && "Details about this incident"}
             {data.type === "heatmap_region" &&
-              `${data.data.intensity * 100}% intensity in this region`}
+              `${(data.data as HeatmapRegionData).intensity * 100}% intensity in this region`}
           </DialogDescription>
         </DialogHeader>
 
         {data.type === "tweet" && (
           <div className="space-y-4">
             <div className="p-3 border rounded-lg">
+              {" "}
               <div className="flex items-start justify-between mb-1">
-                <div className="font-medium">@{data.data.username}</div>
+                <div className="font-medium">
+                  @{(data.data as TweetData).username}
+                </div>
                 <div className="flex items-center text-xs text-muted-foreground">
-                  {formatTime(data.data.timestamp)}
+                  {formatTime((data.data as TweetData).timestamp)}
                 </div>
               </div>
-
-              <p className="text-sm mb-2">{data.data.text}</p>
-
+              <p className="text-sm mb-2">{(data.data as TweetData).text}</p>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Badge
                     variant={
-                      data.data.category === "need"
+                      (data.data as TweetData).category === "need"
                         ? "destructive"
-                        : data.data.category === "resource"
+                        : (data.data as TweetData).category === "resource"
                           ? "default"
                           : "outline"
                     }
                     className="text-xs px-1.5 py-0 h-5"
                   >
-                    {data.data.category.charAt(0).toUpperCase() +
-                      data.data.category.slice(1)}
+                    {(data.data as TweetData).category.charAt(0).toUpperCase() +
+                      (data.data as TweetData).category.slice(1)}
                   </Badge>
 
-                  {data.data.urgency === "high" && (
+                  {(data.data as TweetData).urgency === "high" && (
                     <Badge
                       variant="outline"
                       className="bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5"
@@ -79,7 +128,7 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
                     </Badge>
                   )}
 
-                  {data.data.verified && (
+                  {(data.data as TweetData).verified && (
                     <Badge
                       variant="outline"
                       className="bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5"
@@ -95,12 +144,12 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{data.data.location}</span>
+                <span>{(data.data as TweetData).location}</span>
               </div>
 
               <div className="flex items-center gap-2 text-sm">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <span>ID: {data.data.id}</span>
+                <span>ID: {(data.data as TweetData).id}</span>
               </div>
             </div>
           </div>
@@ -111,45 +160,49 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
             <div>
               <h3 className="text-sm font-medium mb-2">Needs</h3>
               <div className="space-y-2">
-                {data.data.needs.map((need: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 border rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          need.urgency === "high" ? "destructive" : "outline"
-                        }
-                        className="text-xs"
-                      >
-                        {need.urgency}
-                      </Badge>
-                      <span>{need.type}</span>
+                {(data.data as RegionData).needs.map(
+                  (need: Need, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 border rounded-md"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            need.urgency === "high" ? "destructive" : "outline"
+                          }
+                          className="text-xs"
+                        >
+                          {need.urgency}
+                        </Badge>
+                        <span>{need.type}</span>
+                      </div>
+                      <span className="font-medium">{need.count}</span>
                     </div>
-                    <span className="font-medium">{need.count}</span>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
 
             <div>
               <h3 className="text-sm font-medium mb-2">Resources</h3>
               <div className="space-y-2">
-                {data.data.resources.map((resource: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-2 border rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge variant="default" className="text-xs">
-                        {resource.urgency}
-                      </Badge>
-                      <span>{resource.type}</span>
+                {(data.data as RegionData).resources.map(
+                  (resource: Resource, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 border rounded-md"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="text-xs">
+                          {resource.urgency}
+                        </Badge>
+                        <span>{resource.type}</span>
+                      </div>
+                      <span className="font-medium">{resource.count}</span>
                     </div>
-                    <span className="font-medium">{resource.count}</span>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
           </div>
@@ -160,7 +213,7 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
             <div className="p-4 border rounded-lg">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium">
-                  {data.data.type
+                  {(data.data as IncidentData).type
                     .split("_")
                     .map(
                       (word: string) =>
@@ -170,26 +223,27 @@ export function AlertModal({ open, onOpenChange, data }: AlertModalProps) {
                 </h3>
                 <Badge
                   variant={
-                    data.data.severity === "high"
+                    (data.data as IncidentData).severity === "high"
                       ? "destructive"
-                      : data.data.severity === "medium"
+                      : (data.data as IncidentData).severity === "medium"
                         ? "default"
                         : "outline"
                   }
                 >
-                  {data.data.severity}
+                  {(data.data as IncidentData).severity}
                 </Badge>
               </div>
 
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">ID:</span>
-                  <span>{data.data.id}</span>
+                  <span>{(data.data as IncidentData).id}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground">Coordinates:</span>
                   <span>
-                    X: {data.data.coordinates.x}, Y: {data.data.coordinates.y}
+                    X: {(data.data as IncidentData).coordinates.x}, Y:{" "}
+                    {(data.data as IncidentData).coordinates.y}
                   </span>
                 </div>
               </div>

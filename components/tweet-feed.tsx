@@ -2,17 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertTriangle,
-  ArrowUpDown,
-  Clock,
-  Filter,
-  MapPin,
-  ThumbsUp,
-} from "lucide-react";
+import { AlertTriangle, Clock, MapPin, ThumbsUp } from "lucide-react";
 import { formatTweetTime } from "@/lib/date-utils";
 
 // Composants réutilisables pour réduire la duplication de code
@@ -22,13 +14,13 @@ interface CategoryBadgeProps {
 }
 
 function CategoryBadge({ category, className = "" }: CategoryBadgeProps) {
-  const variant = 
-    category === "need" 
-      ? "destructive" 
-      : category === "resource" 
-        ? "default" 
+  const variant =
+    category === "need"
+      ? "destructive"
+      : category === "resource"
+        ? "default"
         : "outline";
-  
+
   return (
     <Badge variant={variant} className={`text-xs px-1.5 py-0 h-5 ${className}`}>
       {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -43,9 +35,12 @@ interface UrgencyBadgeProps {
 
 function UrgencyBadge({ isUrgent, className = "" }: UrgencyBadgeProps) {
   if (!isUrgent) return null;
-  
+
   return (
-    <Badge variant="outline" className={`bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5 ${className}`}>
+    <Badge
+      variant="outline"
+      className={`bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5 ${className}`}
+    >
       <AlertTriangle className="h-3 w-3 mr-1" />
       Urgent
     </Badge>
@@ -59,9 +54,12 @@ interface VerifiedBadgeProps {
 
 function VerifiedBadge({ isVerified, className = "" }: VerifiedBadgeProps) {
   if (!isVerified) return null;
-  
+
   return (
-    <Badge variant="outline" className={`bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5 ${className}`}>
+    <Badge
+      variant="outline"
+      className={`bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5 ${className}`}
+    >
       <ThumbsUp className="h-3 w-3 mr-1" />
       Verified
     </Badge>
@@ -105,15 +103,10 @@ function FeedTweet({ tweet, onClick }: FeedTweetProps) {
   );
 }
 
-interface TweetFeedProps {
-  onAlertClick: (data: any) => void;
-}
-
-export function TweetFeed({ onAlertClick }: TweetFeedProps) {
+export function TweetFeed() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [paused, setPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -185,17 +178,24 @@ export function TweetFeed({ onAlertClick }: TweetFeedProps) {
 
     loadTweets();
 
-    if (paused) return;
-    
     // Simulation des tweets périodiques - optimisation avec cleanup
     const interval = setInterval(() => {
       const generateRandomTweet = () => {
         const categories = ["need", "resource", "alert"] as const;
         const urgencies = ["low", "medium", "high"] as const;
-        const locations = ["North", "South", "East", "West", "Central", "Downtown"];
-        const randomCategory = categories[Math.floor(Math.random() * categories.length)];
-        const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-        
+        const locations = [
+          "North",
+          "South",
+          "East",
+          "West",
+          "Central",
+          "Downtown",
+        ];
+        const randomCategory =
+          categories[Math.floor(Math.random() * categories.length)];
+        const randomLocation =
+          locations[Math.floor(Math.random() * locations.length)];
+
         const newTweet: Tweet = {
           id: `tweet-${Date.now()}`,
           text: `${randomCategory === "need" ? "Need" : randomCategory === "resource" ? "Offering" : "Alert"}: ${
@@ -221,17 +221,17 @@ export function TweetFeed({ onAlertClick }: TweetFeedProps) {
           },
           verified: Math.random() > 0.7,
         };
-        
+
         return newTweet;
       };
-      
+
       // Ajout d'un nouveau tweet en gardant une liste d'une taille raisonnable
       setTweets((prevTweets) => {
         const newTweet = generateRandomTweet();
         const updatedTweets = [newTweet, ...prevTweets].slice(0, 50); // Limite à 50 tweets
         return updatedTweets;
       });
-      
+
       // Auto-scroll au dernier tweet ajouté
       setTimeout(() => {
         if (scrollRef.current) {
@@ -241,7 +241,7 @@ export function TweetFeed({ onAlertClick }: TweetFeedProps) {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [paused]);
+  }, []);
 
   // Filtrage des tweets optimisé
   const filteredTweets = tweets.filter(
@@ -249,13 +249,19 @@ export function TweetFeed({ onAlertClick }: TweetFeedProps) {
       search === "" ||
       tweet.text.toLowerCase().includes(search.toLowerCase()) ||
       tweet.location.toLowerCase().includes(search.toLowerCase()) ||
-      tweet.username.toLowerCase().includes(search.toLowerCase())
+      tweet.username.toLowerCase().includes(search.toLowerCase()),
   );
 
   // Tweets filtrés par catégorie pour les onglets
-  const needTweets = filteredTweets.filter((tweet) => tweet.category === "need");
-  const resourceTweets = filteredTweets.filter((tweet) => tweet.category === "resource");
-  const alertTweets = filteredTweets.filter((tweet) => tweet.category === "alert");
+  const needTweets = filteredTweets.filter(
+    (tweet) => tweet.category === "need",
+  );
+  const resourceTweets = filteredTweets.filter(
+    (tweet) => tweet.category === "resource",
+  );
+  const alertTweets = filteredTweets.filter(
+    (tweet) => tweet.category === "alert",
+  );
 
   // Fonction pour afficher les tweets selon la catégorie
   const renderTweets = (categoryTweets: Tweet[]) => {
@@ -276,21 +282,7 @@ export function TweetFeed({ onAlertClick }: TweetFeedProps) {
     }
 
     return categoryTweets.map((tweet) => (
-      <FeedTweet 
-        key={tweet.id} 
-        tweet={tweet}
-        onClick={() => {
-          if (tweet.category === "alert") {
-            onAlertClick({
-              title: "Alert Details",
-              message: tweet.text,
-              location: tweet.location,
-              timestamp: tweet.timestamp,
-              urgency: tweet.urgency,
-            });
-          }
-        }}
-      />
+      <FeedTweet key={tweet.id} tweet={tweet} />
     ));
   };
 
@@ -336,7 +328,11 @@ export function TweetFeed({ onAlertClick }: TweetFeedProps) {
               Alerts
               {alertTweets.length > 0 && (
                 <Badge
-                  variant={alertTweets.some((t) => t.urgency === "high") ? "destructive" : "default"}
+                  variant={
+                    alertTweets.some((t) => t.urgency === "high")
+                      ? "destructive"
+                      : "default"
+                  }
                   className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full"
                 >
                   {alertTweets.length}
