@@ -1,10 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { formatDate, DATE_FORMATS } from "@/lib/date-utils";
 
@@ -25,10 +28,20 @@ export function DatePicker({
 }: DatePickerProps) {
   const today = new Date();
   const months = [
-    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
-    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
   ];
-  
+
   // État local pour le mois et l'année affichés
   const [viewDate, setViewDate] = React.useState({
     month: date ? date.getMonth() : today.getMonth(),
@@ -49,7 +62,7 @@ export function DatePicker({
 
   // Navigation entre les mois
   const prevMonth = () => {
-    setViewDate(prev => {
+    setViewDate((prev) => {
       if (prev.month === 0) {
         return { month: 11, year: prev.year - 1 };
       }
@@ -58,7 +71,7 @@ export function DatePicker({
   };
 
   const nextMonth = () => {
-    setViewDate(prev => {
+    setViewDate((prev) => {
       if (prev.month === 11) {
         return { month: 0, year: prev.year + 1 };
       }
@@ -106,13 +119,14 @@ export function DatePicker({
             size="sm"
             className={cn(
               "h-9 w-9 p-0 font-normal",
-              isSelectedDate(day) && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-              isToday(day) && !isSelectedDate(day) && "border border-primary"
+              isSelectedDate(day) &&
+                "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+              isToday(day) && !isSelectedDate(day) && "border border-primary",
             )}
             onClick={() => handleSelectDate(day)}
           >
             {day}
-          </Button>
+          </Button>,
         );
       } else {
         days.push(<div key={`empty-${i}`} className="h-9 w-9" />);
@@ -130,7 +144,7 @@ export function DatePicker({
           className={cn(
             "w-[280px] justify-start text-left font-normal",
             !date && "text-muted-foreground",
-            className
+            className,
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -161,16 +175,14 @@ export function DatePicker({
             <div>Sa</div>
             <div>Di</div>
           </div>
-          <div className="grid grid-cols-7 gap-1">
-            {renderCalendarDays()}
-          </div>
+          <div className="grid grid-cols-7 gap-1">{renderCalendarDays()}</div>
           <div className="mt-3 flex items-center justify-between">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onDateChange(today)}
             >
-              Aujourd'hui
+              Aujourd&apos;hui
             </Button>
             <Button
               variant="outline"

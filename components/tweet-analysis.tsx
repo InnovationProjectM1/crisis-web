@@ -22,10 +22,7 @@ import {
 } from "recharts";
 import {
   AlertTriangle,
-  ArrowUpDown,
   Clock,
-  Download,
-  Filter,
   MapPin,
   MessageSquare,
   Search,
@@ -39,13 +36,13 @@ interface CategoryBadgeProps {
 }
 
 function CategoryBadge({ category, className = "" }: CategoryBadgeProps) {
-  const variant = 
-    category === "need" 
-      ? "destructive" 
-      : category === "resource" 
-        ? "default" 
+  const variant =
+    category === "need"
+      ? "destructive"
+      : category === "resource"
+        ? "default"
         : "outline";
-  
+
   return (
     <Badge variant={variant} className={`text-xs px-1.5 py-0 h-5 ${className}`}>
       {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -60,9 +57,12 @@ interface UrgencyBadgeProps {
 
 function UrgencyBadge({ isUrgent, className = "" }: UrgencyBadgeProps) {
   if (!isUrgent) return null;
-  
+
   return (
-    <Badge variant="outline" className={`bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5 ${className}`}>
+    <Badge
+      variant="outline"
+      className={`bg-red-500/10 text-red-500 border-red-500/20 text-xs px-1.5 py-0 h-5 ${className}`}
+    >
       <AlertTriangle className="h-3 w-3 mr-1" />
       Urgent
     </Badge>
@@ -76,9 +76,12 @@ interface VerifiedBadgeProps {
 
 function VerifiedBadge({ isVerified, className = "" }: VerifiedBadgeProps) {
   if (!isVerified) return null;
-  
+
   return (
-    <Badge variant="outline" className={`bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5 ${className}`}>
+    <Badge
+      variant="outline"
+      className={`bg-green-500/10 text-green-500 border-green-500/20 text-xs px-1.5 py-0 h-5 ${className}`}
+    >
       <ThumbsUp className="h-3 w-3 mr-1" />
       Verified
     </Badge>
@@ -132,13 +135,13 @@ interface ChartContainerProps {
   vertical?: boolean;
 }
 
-function ChartContainer({ 
-  barData, 
-  pieData, 
+function ChartContainer({
+  barData,
+  pieData,
   barDataKey,
   barFill = "#8884d8",
   colors,
-  vertical = false 
+  vertical = false,
 }: ChartContainerProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
@@ -180,10 +183,15 @@ function ChartContainer({
             outerRadius={80}
             fill="#8884d8"
             dataKey="value"
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            label={({ name, percent }) =>
+              `${name} ${(percent * 100).toFixed(0)}%`
+            }
           >
             {pieData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={colors[index % colors.length]}
+              />
             ))}
           </Pie>
           <Tooltip />
@@ -294,16 +302,22 @@ export function TweetAnalysis() {
 
   const urgencyData = [
     { name: "High", value: tweets.filter((t) => t.urgency === "high").length },
-    { name: "Medium", value: tweets.filter((t) => t.urgency === "medium").length },
+    {
+      name: "Medium",
+      value: tweets.filter((t) => t.urgency === "medium").length,
+    },
     { name: "Low", value: tweets.filter((t) => t.urgency === "low").length },
   ];
 
   // Calcul optimisé pour éviter de filtrer plusieurs fois
-  const locationCounts = tweets.reduce((acc, tweet) => {
-    const location = tweet.location.split(' ')[0]; // Extraire la partie Nord, Sud, etc.
-    acc[location] = (acc[location] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const locationCounts = tweets.reduce(
+    (acc, tweet) => {
+      const location = tweet.location.split(" ")[0]; // Extraire la partie Nord, Sud, etc.
+      acc[location] = (acc[location] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const locationData = Object.entries(locationCounts)
     .map(([name, value]) => ({ name, value }))
@@ -341,15 +355,21 @@ export function TweetAnalysis() {
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{statistics.needsCount}</div>
+                <div className="text-2xl font-bold">
+                  {statistics.needsCount}
+                </div>
                 <div className="text-xs text-muted-foreground">Needs</div>
               </div>
               <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{statistics.resourcesCount}</div>
+                <div className="text-2xl font-bold">
+                  {statistics.resourcesCount}
+                </div>
                 <div className="text-xs text-muted-foreground">Resources</div>
               </div>
               <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">{statistics.alertsCount}</div>
+                <div className="text-2xl font-bold">
+                  {statistics.alertsCount}
+                </div>
                 <div className="text-xs text-muted-foreground">Alerts</div>
               </div>
             </div>
@@ -416,7 +436,9 @@ export function TweetAnalysis() {
 
                     <div className="flex items-center gap-1.5">
                       <CategoryBadge category={selectedTweet.category} />
-                      <UrgencyBadge isUrgent={selectedTweet.urgency === "high"} />
+                      <UrgencyBadge
+                        isUrgent={selectedTweet.urgency === "high"}
+                      />
                       <VerifiedBadge isVerified={selectedTweet.verified} />
                     </div>
                   </div>
@@ -500,29 +522,29 @@ export function TweetAnalysis() {
 
             <div className="mt-4 h-[300px]">
               <TabsContent value="category" className="h-full">
-                <ChartContainer 
-                  barData={categoryData} 
-                  pieData={categoryData} 
-                  barDataKey="value" 
+                <ChartContainer
+                  barData={categoryData}
+                  pieData={categoryData}
+                  barDataKey="value"
                   colors={COLORS}
                 />
               </TabsContent>
 
               <TabsContent value="urgency" className="h-full">
-                <ChartContainer 
-                  barData={urgencyData} 
-                  pieData={urgencyData} 
-                  barDataKey="value" 
+                <ChartContainer
+                  barData={urgencyData}
+                  pieData={urgencyData}
+                  barDataKey="value"
                   barFill="#ff8042"
                   colors={COLORS}
                 />
               </TabsContent>
 
               <TabsContent value="location" className="h-full">
-                <ChartContainer 
-                  barData={locationData} 
-                  pieData={locationData} 
-                  barDataKey="value" 
+                <ChartContainer
+                  barData={locationData}
+                  pieData={locationData}
+                  barDataKey="value"
                   barFill="#00c49f"
                   vertical={true}
                   colors={COLORS}
