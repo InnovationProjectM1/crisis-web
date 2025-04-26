@@ -11,14 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
 import { CalendarIcon, Download } from "lucide-react";
+import { formatDate, DATE_FORMATS } from "@/lib/date-utils";
 import { TrendChart } from "./trend-chart";
 import { RegionalHeatmap } from "./regional-heatmap";
 import {
@@ -164,25 +164,13 @@ export function TrendsAnalysis() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-[240px] justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date ? format(date, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <DatePicker
+            date={date}
+            onDateChange={setDate}
+            format={DATE_FORMATS.long}
+            placeholder="Pick a date"
+            className="w-[240px]"
+          />
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export Data
