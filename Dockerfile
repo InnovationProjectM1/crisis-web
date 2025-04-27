@@ -1,17 +1,12 @@
-# Utiliser l'image Node.js alpine
-FROM node:22-alpine
+FROM node:20-alpine
 
-# Définir le répertoire de travail dans le container
 WORKDIR /app
 
-# Copier les fichiers nécessaires depuis le répertoire local du projet
-COPY .next/standalone .next/standalone
-COPY public public
-COPY .next/static .next/static
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/static ./.next/static
 
-# Exposer le port 3000 pour l'application
+ENV NODE_ENV production
 EXPOSE 3000
 
-RUN cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
-
-CMD ["node", ".next/standalone/server.js"]
+CMD ["node", "server.js"]
