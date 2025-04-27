@@ -50,27 +50,27 @@ pipeline {
         // }
 
         stage('🏗️ Build') {
-            when {
+/*             when {
                 branch 'master'
-            }
+            } */
             steps {
                 sh 'npm run build'
             }
         }
         
         stage('Docker Build') {
-            when {
+/*             when {
                 branch 'master'
-            }
+            } */
             steps {
                 sh "docker build -t $IMAGE_NAME ."
             }
         }
 
         stage('Deploy') {
-            when {
+/*             when {
                 branch 'master'
-            }
+            } */
             steps {
                 sh "docker stop $IMAGE_NAME || true"
                 sh "docker rm $IMAGE_NAME || true"
