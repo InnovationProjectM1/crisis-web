@@ -1,5 +1,3 @@
-"use client";
-
 import { TweetFeed } from "./tweet-feed";
 import { ResourceMap } from "./resource-map";
 import { TrendChart } from "./trend-chart";

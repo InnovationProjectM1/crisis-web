@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -8,28 +8,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import "leaflet.heat";
+import dynamic from "next/dynamic";
 
-export function RegionalHeatmap() {
-  const mapRef = useRef<L.Map | null>(null);
-  const heatLayerRef = useRef<L.Layer | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
-  const popupRef = useRef<L.Popup | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-
-  const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [dataType, setDataType] = useState("needs");
-  const [selectedRegion, setSelectedRegion] = useState<null | {
+// Types
+interface HeatmapData {
+  regions: Array<{
     id: string;
     name: string;
     lat: number;
     lng: number;
     needsIntensity: number;
     resourcesIntensity: number;
-  }>(null);
+  }>;
+}
+
+interface RegionType {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  needsIntensity: number;
+  resourcesIntensity: number;
+}
+
+// Import HeatMapComponent dynamically with no SSR
+const HeatMapComponentWithNoSSR = dynamic(
+  () => import("./heatmap-component").then((mod) => mod.HeatMapComponent),
+  { ssr: false },
+);
+
+export function RegionalHeatmap() {
+  const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dataType, setDataType] = useState("needs");
+  const [selectedRegion, setSelectedRegion] = useState<RegionType | null>(null);
 
   useEffect(() => {
     // Simulate loading heatmap data
@@ -117,123 +129,6 @@ export function RegionalHeatmap() {
     loadHeatmapData();
   }, []);
 
-  // Initialisation de la carte
-  useEffect(() => {
-    // Ne pas initialiser la carte si le conteneur n'est pas prêt ou si les données chargent
-    if (!mapContainerRef.current || loading) return;
-
-    // Nettoyer la carte existante si elle existe
-    if (mapRef.current) {
-      mapRef.current.remove();
-      mapRef.current = null;
-      heatLayerRef.current = null;
-      if (markerRef.current) {
-        markerRef.current.remove();
-        markerRef.current = null;
-      }
-      if (popupRef.current) {
-        popupRef.current.remove();
-        popupRef.current = null;
-      }
-    }
-
-    // Créer une nouvelle carte
-    const map = L.map(mapContainerRef.current, {
-      center: [48.846, 2.3522],
-      zoom: 11,
-      scrollWheelZoom: false,
-    });
-
-    // Ajouter la couche de tuiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
-
-    // Stocker la référence à la carte
-    mapRef.current = map;
-
-    // Gérer les clics sur la carte
-    map.on("click", (e) => {
-      if (!heatmapData) return;
-
-      let minDist = Infinity;
-      let closest = null;
-
-      for (const region of heatmapData.regions) {
-        const dist = Math.sqrt(
-          Math.pow(region.lat - e.latlng.lat, 2) +
-            Math.pow(region.lng - e.latlng.lng, 2),
-        );
-        if (dist < minDist) {
-          minDist = dist;
-          closest = region;
-        }
-      }
-
-      if (closest && minDist < 0.01) {
-        setSelectedRegion(closest);
-        // onRegionClick supprimé comme demandé
-      } else {
-        setSelectedRegion(null);
-      }
-    });
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [loading, heatmapData]);
-
-  // Préparer les points pour la heatmap
-  useEffect(() => {
-    if (!mapRef.current || !heatmapData?.regions || loading) return;
-
-    // Supprimer la couche de chaleur existante si elle existe
-    if (heatLayerRef.current) {
-      mapRef.current.removeLayer(heatLayerRef.current);
-      heatLayerRef.current = null;
-    }
-
-    // Créer les points pour la heatmap
-    const points = heatmapData.regions.map(
-      (region) =>
-        [
-          region.lat,
-          region.lng,
-          dataType === "needs"
-            ? region.needsIntensity
-            : region.resourcesIntensity,
-        ] as [number, number, number],
-    );
-
-    // Créer et ajouter la couche de chaleur
-    // @ts-expect-error - L'extension leaflet.heat n'a pas de types TS corrects
-    const heatLayer = L.heatLayer(points, { radius: 30, blur: 20, max: 1 });
-    heatLayer.addTo(mapRef.current);
-
-    // Stocker la référence à la couche de chaleur
-    heatLayerRef.current = heatLayer;
-  }, [heatmapData, dataType, loading]);
-
-  // Cette section gérait l'affichage du tooltip, maintenant supprimée comme demandé
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    // Supprimer le marker et le popup existant
-    if (markerRef.current) {
-      markerRef.current.remove();
-      markerRef.current = null;
-    }
-    if (popupRef.current) {
-      popupRef.current.remove();
-      popupRef.current = null;
-    }
-
-    // Le code pour afficher le tooltip a été supprimé comme demandé
-  }, [selectedRegion]);
-
   return (
     <div className="h-[400px] flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -255,10 +150,11 @@ export function RegionalHeatmap() {
           </div>
         ) : (
           <div className="w-full h-full relative">
-            <div
-              ref={mapContainerRef}
-              className="w-full h-full"
-              style={{ zIndex: 0 }}
+            <HeatMapComponentWithNoSSR
+              heatmapData={heatmapData}
+              dataType={dataType}
+              selectedRegion={selectedRegion}
+              setSelectedRegion={setSelectedRegion}
             />
             {/* Légende Heatmap, animée */}
             <div className="absolute left-4 bottom-4 z-[1000] flex flex-col items-start gap-1 bg-background/80 backdrop-blur-sm p-2 rounded-md shadow text-xs pointer-events-auto animate-fade-in">
@@ -285,15 +181,4 @@ export function RegionalHeatmap() {
       </div>
     </div>
   );
-}
-
-interface HeatmapData {
-  regions: Array<{
-    id: string;
-    name: string;
-    lat: number;
-    lng: number;
-    needsIntensity: number;
-    resourcesIntensity: number;
-  }>;
 }

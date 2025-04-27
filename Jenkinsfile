@@ -3,10 +3,12 @@ pipeline {
 
     tools {
         nodejs 'nodejs'
+        docker 'docker'
     }
 
     environment {
-        TARGET_DIST = '/app/dist'
+        IMAGE_NAME = "crisis-nextjs"
+
     }
 
     options {
@@ -55,19 +57,34 @@ pipeline {
                 sh 'npm run build'
             }
         }
-
-        stage('📁 Déploiement local dans /app/dist') {
+        
+        stage('Docker Build') {
             when {
                 branch 'master'
             }
             steps {
-                script {
-                    sh """
-                        ls -la ${TARGET_DIST} || echo '❌ Le dossier n’existe pas !'
-                        rm -rf ${TARGET_DIST}/*
-                        cp -r dist/* ${TARGET_DIST}/
-                    """
-                }
+                sh "docker build -t $IMAGE_NAME ."
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh "docker stop $IMAGE_NAME || true"
+                sh "docker rm $IMAGE_NAME || true"
+                sh """
+                    docker run -d --name $IMAGE_NAME \\
+                    --network webnet \\
+                    -l traefik.enable=true \\
+                    -l traefik.http.routers.crisis.rule=Host\\(\\`crisis.maxlamenace.duckdns.org\\`\\) \\
+                    -l traefik.http.services.crisis.loadbalancer.server.port=3000 \\
+                    -l traefik.http.routers.crisis.entrypoints=websecure \\
+                    -l traefik.http.routers.crisis.tls.certresolver=myresolver \\
+                    --restart unless-stopped \\
+                    $IMAGE_NAME:latest
+                """
             }
         }
     }
