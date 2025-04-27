@@ -63,7 +63,7 @@ pipeline {
                 branch 'master'
             } */
             steps {
-                sh "docker build -t $IMAGE_NAME ."
+                sh "docker build --platform linux/arm64 -t $IMAGE_NAME ."
             }
         }
 
