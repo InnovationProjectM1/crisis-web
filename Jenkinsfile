@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "crisis-nextjs"
-        DOCKER_BUILDX = 'true'
+
     }
 
     options {
@@ -36,20 +36,41 @@ pipeline {
             }
         }
 
+        // stage('🧪 Tests') {
+        //     steps {
+        //         script {
+        //             try {
+        //                 sh 'npm test'
+        //             } catch (err) {
+        //                 echo "⚠️ Tests échoués ou non définis : ${err.message}"
+        //                 currentBuild.result = 'UNSTABLE'
+        //             }
+        //         }
+        //     }
+        // }
+
         stage('🏗️ Build') {
+/*             when {
+                branch 'master'
+            } */
             steps {
                 sh 'npm run build'
             }
         }
-
+        
         stage('Docker Build') {
+/*             when {
+                branch 'master'
+            } */
             steps {
-                    sh "docker buildx create --use  # Créer et utiliser le builder buildx"
-                    sh "docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME ."
+                sh "docker build -t $IMAGE_NAME ."
             }
         }
 
         stage('Deploy') {
+/*             when {
+                branch 'master'
+            } */
             steps {
                 sh "docker stop $IMAGE_NAME || true"
                 sh "docker rm $IMAGE_NAME || true"
