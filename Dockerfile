@@ -1,5 +1,5 @@
 # Utiliser l'image Node.js alpine
-FROM node:23-alpine
+FROM node:16-alpine
 
 # Définir le répertoire de travail dans le container
 WORKDIR /app
