@@ -24,15 +24,13 @@ npm run dev
 
 This will start the Vite development server and open your application in the browser.
 
-### Building for production
+### Building & Preview for production
 
 To build the application for production:
 
 ```bash
 npm run build
 ```
-
-### Preview production build
 
 To preview the production build locally:
 
