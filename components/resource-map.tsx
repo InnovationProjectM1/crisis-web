@@ -38,16 +38,14 @@ export function ResourceMap() {
         const regionData = await apiService.getRegionData();
         setRegions(regionData);
       } catch (error) {
-        console.error('Error loading map data:', error);
+        console.error("Error loading map data:", error);
         // Fallback avec des données d'exemple en cas d'erreur API
         setRegions([
           {
             id: "downtown",
             name: "API Connection Failed",
             position: [48.8566, 2.3522],
-            needs: [
-              { type: "medical", count: 1, urgency: "high" },
-            ],
+            needs: [{ type: "medical", count: 1, urgency: "high" }],
             resources: [],
           },
         ]);

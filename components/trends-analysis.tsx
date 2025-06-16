@@ -29,7 +29,13 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { apiService, Tweet, GroupStatistics, DifficultyStatistics, TweetStatistics } from "@/lib/api";
+import {
+  apiService,
+  Tweet,
+  GroupStatistics,
+  DifficultyStatistics,
+  TweetStatistics,
+} from "@/lib/api";
 
 // Types pour une meilleure maintenance
 interface ChartData {
@@ -157,7 +163,8 @@ function MiniChart({
 export function TrendsAnalysis() {
   const [timeRange, setTimeRange] = useState("24h");
   const [chartType, setChartType] = useState<"line" | "bar">("line");
-  const [date, setDate] = useState<Date | undefined>(new Date());  const [loading, setLoading] = useState(true);
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<{
     tweets: Tweet[];
     groupStats: GroupStatistics[];
@@ -167,7 +174,7 @@ export function TrendsAnalysis() {
     tweets: [],
     groupStats: [],
     difficultyStats: [],
-    tweetStats: { total: 0, classified: 0, unclassified: 0 }
+    tweetStats: { total: 0, classified: 0, unclassified: 0 },
   });
 
   // Charger les données depuis l'API
@@ -175,16 +182,17 @@ export function TrendsAnalysis() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [tweets, groupStats, difficultyStats, tweetStats] = await Promise.all([
-          apiService.getTweets(),
-          apiService.getGroupStatistics(),
-          apiService.getDifficultyStatistics(),
-          apiService.getTweetStatistics()
-        ]);
-        
+        const [tweets, groupStats, difficultyStats, tweetStats] =
+          await Promise.all([
+            apiService.getTweets(),
+            apiService.getGroupStatistics(),
+            apiService.getDifficultyStatistics(),
+            apiService.getTweetStatistics(),
+          ]);
+
         setApiData({ tweets, groupStats, difficultyStats, tweetStats });
       } catch (error) {
-        console.error('Error loading API data:', error);
+        console.error("Error loading API data:", error);
       } finally {
         setLoading(false);
       }
@@ -204,8 +212,8 @@ export function TrendsAnalysis() {
         categoryData: {
           needs: [],
           resources: [],
-          alerts: []
-        }
+          alerts: [],
+        },
       };
     }
 
@@ -219,104 +227,244 @@ export function TrendsAnalysis() {
     const trendData = [];
 
     // Générer les données de tendance basées sur le timeRange sélectionné
-    const periods = timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
-    const timeUnit = timeRange === '24h' ? 'hour' : 'day';
-    
-    for (let i = 0; i < Math.min(periods, 12); i++) { // Limiter à 12 points pour la lisibilité
+    const periods =
+      timeRange === "24h"
+        ? 24
+        : timeRange === "7d"
+          ? 7
+          : timeRange === "30d"
+            ? 30
+            : 90;
+    const timeUnit = timeRange === "24h" ? "hour" : "day";
+
+    for (let i = 0; i < Math.min(periods, 12); i++) {
+      // Limiter à 12 points pour la lisibilité
       const periodIndex = Math.floor((i * periods) / 12);
       let startDate, endDate, name;
-      
-      if (timeUnit === 'hour') {
-        startDate = new Date(now.getTime() - (24 - periodIndex) * 60 * 60 * 1000);
+
+      if (timeUnit === "hour") {
+        startDate = new Date(
+          now.getTime() - (24 - periodIndex) * 60 * 60 * 1000,
+        );
         endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-        name = startDate.getHours().toString().padStart(2, '0') + 'h';
+        name = startDate.getHours().toString().padStart(2, "0") + "h";
       } else {
-        startDate = new Date(now.getTime() - (periods - periodIndex) * 24 * 60 * 60 * 1000);
+        startDate = new Date(
+          now.getTime() - (periods - periodIndex) * 24 * 60 * 60 * 1000,
+        );
         endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-        name = startDate.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+        name = startDate.toLocaleDateString("en", {
+          month: "short",
+          day: "numeric",
+        });
       }
-      
-      const periodTweets = apiData.tweets.filter(tweet => {
+
+      const periodTweets = apiData.tweets.filter((tweet) => {
         const tweetDate = new Date(tweet.timestamp);
         return tweetDate >= startDate && tweetDate < endDate;
       });
 
-      const needsCount = periodTweets.filter(t => t.category === 'need').length;
-      const resourcesCount = periodTweets.filter(t => t.category === 'resource').length;
-      const alertsCount = periodTweets.filter(t => t.category === 'alert').length;
+      const needsCount = periodTweets.filter(
+        (t) => t.category === "need",
+      ).length;
+      const resourcesCount = periodTweets.filter(
+        (t) => t.category === "resource",
+      ).length;
+      const alertsCount = periodTweets.filter(
+        (t) => t.category === "alert",
+      ).length;
 
       trendData.push({
         name,
         needs: needsCount,
         resources: resourcesCount,
-        alerts: alertsCount
+        alerts: alertsCount,
       });
     }
 
     // Données pour les mini-charts (derniers 7 jours)
     for (let i = 0; i < days; i++) {
-      const startDate = new Date(now.getTime() - (days - i - 1) * 24 * 60 * 60 * 1000);
+      const startDate = new Date(
+        now.getTime() - (days - i - 1) * 24 * 60 * 60 * 1000,
+      );
       const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-      
-      const dayTweets = apiData.tweets.filter(tweet => {
+
+      const dayTweets = apiData.tweets.filter((tweet) => {
         const tweetDate = new Date(tweet.timestamp);
         return tweetDate >= startDate && tweetDate < endDate;
       });
 
-      needsData.push(dayTweets.filter(t => t.category === 'need').length);
-      resourcesData.push(dayTweets.filter(t => t.category === 'resource').length);
-      alertsData.push(dayTweets.filter(t => t.category === 'alert').length);
-      
+      needsData.push(dayTweets.filter((t) => t.category === "need").length);
+      resourcesData.push(
+        dayTweets.filter((t) => t.category === "resource").length,
+      );
+      alertsData.push(dayTweets.filter((t) => t.category === "alert").length);
+
       // Simuler le temps de réponse basé sur l'urgence
-      const urgentTweets = dayTweets.filter(t => t.urgency === 'high').length;
-      const avgResponseTime = urgentTweets > 0 ? Math.max(20, 60 - urgentTweets * 5) : 45;
+      const urgentTweets = dayTweets.filter((t) => t.urgency === "high").length;
+      const avgResponseTime =
+        urgentTweets > 0 ? Math.max(20, 60 - urgentTweets * 5) : 45;
       responseTimeData.push(avgResponseTime);
-    }    // Analyser les sous-catégories pour les graphiques détaillés
+    } // Analyser les sous-catégories pour les graphiques détaillés
     const subcategoryCount = (category: string, subcategory: string) => {
-      return apiData.tweets.filter(t => t.category === category && 
-        t.text?.toLowerCase().includes(subcategory.toLowerCase())
+      return apiData.tweets.filter(
+        (t) =>
+          t.category === category &&
+          t.text?.toLowerCase().includes(subcategory.toLowerCase()),
       ).length;
     };
 
     const categoryData = {
       needs: [
-        { name: "Medical", value: subcategoryCount('need', 'medical') || subcategoryCount('need', 'health') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.3) },
-        { name: "Food", value: subcategoryCount('need', 'food') || subcategoryCount('need', 'nutrition') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.25) },
-        { name: "Shelter", value: subcategoryCount('need', 'shelter') || subcategoryCount('need', 'housing') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.2) },
-        { name: "Water", value: subcategoryCount('need', 'water') || subcategoryCount('need', 'drink') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.15) },
-        { name: "Transport", value: subcategoryCount('need', 'transport') || subcategoryCount('need', 'travel') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.1) },
+        {
+          name: "Medical",
+          value:
+            subcategoryCount("need", "medical") ||
+            subcategoryCount("need", "health") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "need").length * 0.3,
+            ),
+        },
+        {
+          name: "Food",
+          value:
+            subcategoryCount("need", "food") ||
+            subcategoryCount("need", "nutrition") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "need").length * 0.25,
+            ),
+        },
+        {
+          name: "Shelter",
+          value:
+            subcategoryCount("need", "shelter") ||
+            subcategoryCount("need", "housing") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "need").length * 0.2,
+            ),
+        },
+        {
+          name: "Water",
+          value:
+            subcategoryCount("need", "water") ||
+            subcategoryCount("need", "drink") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "need").length * 0.15,
+            ),
+        },
+        {
+          name: "Transport",
+          value:
+            subcategoryCount("need", "transport") ||
+            subcategoryCount("need", "travel") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "need").length * 0.1,
+            ),
+        },
       ].sort((a, b) => b.value - a.value),
-      
+
       resources: [
-        { name: "Volunteers", value: subcategoryCount('resource', 'volunteer') || subcategoryCount('resource', 'help') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.3) },
-        { name: "Medical", value: subcategoryCount('resource', 'medical') || subcategoryCount('resource', 'health') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.25) },
-        { name: "Food", value: subcategoryCount('resource', 'food') || subcategoryCount('resource', 'nutrition') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.2) },
-        { name: "Equipment", value: subcategoryCount('resource', 'equipment') || subcategoryCount('resource', 'tools') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.15) },
-        { name: "Shelter", value: subcategoryCount('resource', 'shelter') || subcategoryCount('resource', 'housing') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.1) },
+        {
+          name: "Volunteers",
+          value:
+            subcategoryCount("resource", "volunteer") ||
+            subcategoryCount("resource", "help") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "resource").length *
+                0.3,
+            ),
+        },
+        {
+          name: "Medical",
+          value:
+            subcategoryCount("resource", "medical") ||
+            subcategoryCount("resource", "health") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "resource").length *
+                0.25,
+            ),
+        },
+        {
+          name: "Food",
+          value:
+            subcategoryCount("resource", "food") ||
+            subcategoryCount("resource", "nutrition") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "resource").length *
+                0.2,
+            ),
+        },
+        {
+          name: "Equipment",
+          value:
+            subcategoryCount("resource", "equipment") ||
+            subcategoryCount("resource", "tools") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "resource").length *
+                0.15,
+            ),
+        },
+        {
+          name: "Shelter",
+          value:
+            subcategoryCount("resource", "shelter") ||
+            subcategoryCount("resource", "housing") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "resource").length *
+                0.1,
+            ),
+        },
       ].sort((a, b) => b.value - a.value),
-      
+
       alerts: [
-        { name: "Emergency", value: subcategoryCount('alert', 'emergency') || subcategoryCount('alert', 'urgent') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.3) },
-        { name: "Weather", value: subcategoryCount('alert', 'weather') || subcategoryCount('alert', 'storm') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.25) },
-        { name: "Infrastructure", value: subcategoryCount('alert', 'power') || subcategoryCount('alert', 'road') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.2) },
-        { name: "Safety", value: subcategoryCount('alert', 'safety') || subcategoryCount('alert', 'danger') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.15) },
-        { name: "Health", value: subcategoryCount('alert', 'health') || subcategoryCount('alert', 'medical') || 
-          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.1) },
-      ].sort((a, b) => b.value - a.value)
+        {
+          name: "Emergency",
+          value:
+            subcategoryCount("alert", "emergency") ||
+            subcategoryCount("alert", "urgent") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "alert").length * 0.3,
+            ),
+        },
+        {
+          name: "Weather",
+          value:
+            subcategoryCount("alert", "weather") ||
+            subcategoryCount("alert", "storm") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "alert").length *
+                0.25,
+            ),
+        },
+        {
+          name: "Infrastructure",
+          value:
+            subcategoryCount("alert", "power") ||
+            subcategoryCount("alert", "road") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "alert").length * 0.2,
+            ),
+        },
+        {
+          name: "Safety",
+          value:
+            subcategoryCount("alert", "safety") ||
+            subcategoryCount("alert", "danger") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "alert").length *
+                0.15,
+            ),
+        },
+        {
+          name: "Health",
+          value:
+            subcategoryCount("alert", "health") ||
+            subcategoryCount("alert", "medical") ||
+            Math.floor(
+              apiData.tweets.filter((t) => t.category === "alert").length * 0.1,
+            ),
+        },
+      ].sort((a, b) => b.value - a.value),
     };
 
     return {
@@ -325,7 +473,7 @@ export function TrendsAnalysis() {
       alerts: generateTimeData(alertsData),
       responseTime: generateTimeData(responseTimeData),
       trendData,
-      categoryData
+      categoryData,
     };
   }, [apiData, loading, timeRange]);
 
@@ -354,32 +502,64 @@ export function TrendsAnalysis() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">        <MiniChart
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {" "}
+        <MiniChart
           data={chartData.needs}
           title="Reported Needs"
-          value={loading ? "..." : apiData.tweets.filter(t => t.category === 'need').length.toString()}
+          value={
+            loading
+              ? "..."
+              : apiData.tweets
+                  .filter((t) => t.category === "need")
+                  .length.toString()
+          }
           change={loading ? "..." : `${apiData.tweetStats.total} total tweets`}
           changeType="neutral"
         />
         <MiniChart
           data={chartData.resources}
           title="Available Resources"
-          value={loading ? "..." : apiData.tweets.filter(t => t.category === 'resource').length.toString()}
-          change={loading ? "..." : `${Math.round((apiData.tweets.filter(t => t.category === 'resource').length / Math.max(apiData.tweets.length, 1)) * 100)}% of total`}
+          value={
+            loading
+              ? "..."
+              : apiData.tweets
+                  .filter((t) => t.category === "resource")
+                  .length.toString()
+          }
+          change={
+            loading
+              ? "..."
+              : `${Math.round((apiData.tweets.filter((t) => t.category === "resource").length / Math.max(apiData.tweets.length, 1)) * 100)}% of total`
+          }
           changeType="positive"
         />
         <MiniChart
           data={chartData.alerts}
           title="Active Alerts"
-          value={loading ? "..." : apiData.tweets.filter(t => t.category === 'alert').length.toString()}
-          change={loading ? "..." : `${apiData.tweets.filter(t => t.urgency === 'high').length} high priority`}
+          value={
+            loading
+              ? "..."
+              : apiData.tweets
+                  .filter((t) => t.category === "alert")
+                  .length.toString()
+          }
+          change={
+            loading
+              ? "..."
+              : `${apiData.tweets.filter((t) => t.urgency === "high").length} high priority`
+          }
           changeType="negative"
         />
         <MiniChart
           data={chartData.responseTime}
           title="Classified Tweets"
           value={loading ? "..." : apiData.tweetStats.classified.toString()}
-          change={loading ? "..." : `${Math.round((apiData.tweetStats.classified / Math.max(apiData.tweetStats.total, 1)) * 100)}% classified`}
+          change={
+            loading
+              ? "..."
+              : `${Math.round((apiData.tweetStats.classified / Math.max(apiData.tweetStats.total, 1)) * 100)}% classified`
+          }
           changeType="positive"
         />
       </div>
@@ -419,7 +599,9 @@ export function TrendsAnalysis() {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>            <div className="h-[300px] w-full">
+          <CardContent>
+            {" "}
+            <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === "line" ? (
                   <LineChart
@@ -491,7 +673,9 @@ export function TrendsAnalysis() {
               <TabsTrigger value="resources">Resources</TabsTrigger>
               <TabsTrigger value="alerts">Alerts</TabsTrigger>
             </TabsList>
-            <div className="h-[300px] mt-4">              <TabsContent value="needs" className="h-full">
+            <div className="h-[300px] mt-4">
+              {" "}
+              <TabsContent value="needs" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData.categoryData.needs}
@@ -505,7 +689,8 @@ export function TrendsAnalysis() {
                     <Bar dataKey="value" fill="#ef4444" />
                   </BarChart>
                 </ResponsiveContainer>
-              </TabsContent>              <TabsContent value="resources" className="h-full">
+              </TabsContent>{" "}
+              <TabsContent value="resources" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData.categoryData.resources}
@@ -519,7 +704,8 @@ export function TrendsAnalysis() {
                     <Bar dataKey="value" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>
-              </TabsContent>              <TabsContent value="alerts" className="h-full">
+              </TabsContent>{" "}
+              <TabsContent value="alerts" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData.categoryData.alerts}

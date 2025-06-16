@@ -8,15 +8,16 @@ export default function AuthDebug() {
   const debugInfo = {
     nextAuthUrl: process.env.NEXT_PUBLIC_NEXTAUTH_URL || "Not set",
     nodeEnv: process.env.NODE_ENV,
-    currentUrl: typeof window !== 'undefined' ? window.location.href : 'Server side',
+    currentUrl:
+      typeof window !== "undefined" ? window.location.href : "Server side",
     sessionStatus: status,
-    session: session
+    session: session,
   };
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Authentication Debug</h1>
-      
+
       <div className="mb-4">
         <h2 className="text-lg font-semibold">Debug Info:</h2>
         <pre className="bg-gray-100 p-4 rounded overflow-auto">

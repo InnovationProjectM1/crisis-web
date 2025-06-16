@@ -103,17 +103,18 @@ export function TrendChart() {
   const baseVolunteers = 30;
   useEffect(() => {
     setLoading(true);
-    
+
     const loadTrendData = async () => {
       try {
         const data = await apiService.getTrendData(timeRange);
         setChartData(data);
       } catch (error) {
-        console.error('Error loading trend data:', error);
-        
+        console.error("Error loading trend data:", error);
+
         // Fallback avec des données générées en cas d'erreur API
         const now = new Date();
-        const dataPoints = timeRange === "24h" ? 24 : timeRange === "7d" ? 7 : 30;
+        const dataPoints =
+          timeRange === "24h" ? 24 : timeRange === "7d" ? 7 : 30;
         const fallbackData: Array<{
           label: string;
           timestamp: Date;
@@ -131,17 +132,29 @@ export function TrendChart() {
                 ? subDays(now, dataPoints - i - 1)
                 : subDays(now, dataPoints - i - 1);
 
-          const dayFactor = 1 + Math.sin((i / (dataPoints / 2)) * Math.PI) * 0.3;
+          const dayFactor =
+            1 + Math.sin((i / (dataPoints / 2)) * Math.PI) * 0.3;
           const randomFactor = 1 + (Math.random() * 0.4 - 0.2);
           const spikeFactor = i === Math.floor(dataPoints / 2) ? 1.8 : 1;
 
-          const needsValue = Math.floor(50 * dayFactor * randomFactor * spikeFactor);
-          const resourcesValue = Math.floor(80 * (1.1 - dayFactor * 0.2) * randomFactor);
-          const volunteersValue = Math.floor(30 * (dayFactor * 0.7 + 0.5) * randomFactor);
+          const needsValue = Math.floor(
+            50 * dayFactor * randomFactor * spikeFactor,
+          );
+          const resourcesValue = Math.floor(
+            80 * (1.1 - dayFactor * 0.2) * randomFactor,
+          );
+          const volunteersValue = Math.floor(
+            30 * (dayFactor * 0.7 + 0.5) * randomFactor,
+          );
 
-          const change = i > 0
-            ? Math.round(((needsValue - fallbackData[i - 1].Needs) / fallbackData[i - 1].Needs) * 100)
-            : 0;
+          const change =
+            i > 0
+              ? Math.round(
+                  ((needsValue - fallbackData[i - 1].Needs) /
+                    fallbackData[i - 1].Needs) *
+                    100,
+                )
+              : 0;
 
           fallbackData.push({
             label:
@@ -172,7 +185,12 @@ export function TrendChart() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Trend Analysis</h2>
         <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as "24h" | "7d" | "30d")}>
+          <Select
+            value={timeRange}
+            onValueChange={(value) =>
+              setTimeRange(value as "24h" | "7d" | "30d")
+            }
+          >
             <SelectTrigger className="w-[100px]">
               <SelectValue placeholder="Time Range" />
             </SelectTrigger>

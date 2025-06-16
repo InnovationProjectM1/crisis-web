@@ -46,11 +46,12 @@ export function RegionalHeatmap() {
   useEffect(() => {
     // Charger les données de heatmap depuis l'API
     const loadHeatmapData = async () => {
-      setLoading(true);      try {
+      setLoading(true);
+      try {
         const heatmapDataResult = await apiService.getHeatmapData();
         setHeatmapData(heatmapDataResult);
       } catch (error) {
-        console.error('Error loading heatmap data:', error);
+        console.error("Error loading heatmap data:", error);
         // Fallback avec des données d'exemple en cas d'erreur API
         setHeatmapData({
           regions: [
@@ -68,7 +69,7 @@ export function RegionalHeatmap() {
         setLoading(false);
       }
     };
-    
+
     loadHeatmapData();
   }, []);
 

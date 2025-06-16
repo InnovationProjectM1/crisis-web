@@ -117,7 +117,7 @@ export function TweetFeed() {
         const apiTweets = await apiService.getTweets();
         setTweets(apiTweets);
       } catch (error) {
-        console.error('Error loading tweets:', error);
+        console.error("Error loading tweets:", error);
         // Fallback avec quelques tweets d'exemple en cas d'erreur
         setTweets([
           {
@@ -130,7 +130,7 @@ export function TweetFeed() {
             location: "System",
             coordinates: { lat: 34.052, lng: -118.243 },
             verified: false,
-          }
+          },
         ]);
       } finally {
         setLoading(false);
