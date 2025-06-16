@@ -37,6 +37,7 @@ import {
   AreaChart as AreaChartIcon,
 } from "lucide-react";
 import { format, subHours, subDays } from "date-fns";
+import { apiService } from "@/lib/api";
 
 // Custom tooltip component
 const CustomTooltip = ({
@@ -91,7 +92,7 @@ export function TrendChart() {
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState("24h");
+  const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d">("24h");
   const [chartType, setChartType] = useState<
     "line" | "bar" | "area" | "composed"
   >("line");
@@ -100,73 +101,70 @@ export function TrendChart() {
   const baseNeeds = 50;
   const baseResources = 80;
   const baseVolunteers = 30;
-
   useEffect(() => {
     setLoading(true);
-    setTimeout(() => {
-      const now = new Date();
-      const dataPoints = timeRange === "24h" ? 24 : timeRange === "7d" ? 7 : 30;
-      const data: Array<{
-        label: string;
-        timestamp: Date;
-        Needs: number;
-        Resources: number;
-        Volunteers: number;
-        change?: number;
-      }> = [];
+    
+    const loadTrendData = async () => {
+      try {
+        const data = await apiService.getTrendData(timeRange);
+        setChartData(data);
+      } catch (error) {
+        console.error('Error loading trend data:', error);
+        
+        // Fallback avec des données générées en cas d'erreur API
+        const now = new Date();
+        const dataPoints = timeRange === "24h" ? 24 : timeRange === "7d" ? 7 : 30;
+        const fallbackData: Array<{
+          label: string;
+          timestamp: Date;
+          Needs: number;
+          Resources: number;
+          Volunteers: number;
+          change?: number;
+        }> = [];
 
-      // Generate more realistic data with trends
-      for (let i = 0; i < dataPoints; i++) {
-        const date =
-          timeRange === "24h"
-            ? subHours(now, dataPoints - i - 1)
-            : timeRange === "7d"
-              ? subDays(now, dataPoints - i - 1)
-              : subDays(now, dataPoints - i - 1);
+        for (let i = 0; i < dataPoints; i++) {
+          const date =
+            timeRange === "24h"
+              ? subHours(now, dataPoints - i - 1)
+              : timeRange === "7d"
+                ? subDays(now, dataPoints - i - 1)
+                : subDays(now, dataPoints - i - 1);
 
-        // Create some patterns in the data
-        const dayFactor = 1 + Math.sin((i / (dataPoints / 2)) * Math.PI) * 0.3;
-        const randomFactor = 1 + (Math.random() * 0.4 - 0.2);
+          const dayFactor = 1 + Math.sin((i / (dataPoints / 2)) * Math.PI) * 0.3;
+          const randomFactor = 1 + (Math.random() * 0.4 - 0.2);
+          const spikeFactor = i === Math.floor(dataPoints / 2) ? 1.8 : 1;
 
-        // Generate a spike around the middle for demonstration
-        const spikeFactor = i === Math.floor(dataPoints / 2) ? 1.8 : 1;
+          const needsValue = Math.floor(50 * dayFactor * randomFactor * spikeFactor);
+          const resourcesValue = Math.floor(80 * (1.1 - dayFactor * 0.2) * randomFactor);
+          const volunteersValue = Math.floor(30 * (dayFactor * 0.7 + 0.5) * randomFactor);
 
-        const needsValue = Math.floor(
-          baseNeeds * dayFactor * randomFactor * spikeFactor,
-        );
-        const resourcesValue = Math.floor(
-          baseResources * (1.1 - dayFactor * 0.2) * randomFactor,
-        );
-        const volunteersValue = Math.floor(
-          baseVolunteers * (dayFactor * 0.7 + 0.5) * randomFactor,
-        );
-
-        // Calculate percentage change from previous point
-        const change =
-          i > 0
-            ? Math.round(
-                ((needsValue - data[i - 1].Needs) / data[i - 1].Needs) * 100,
-              )
+          const change = i > 0
+            ? Math.round(((needsValue - fallbackData[i - 1].Needs) / fallbackData[i - 1].Needs) * 100)
             : 0;
 
-        data.push({
-          label:
-            timeRange === "24h"
-              ? format(date, "HH:00")
-              : timeRange === "7d"
-                ? format(date, "EEE")
-                : format(date, "MMM d"),
-          timestamp: date,
-          Needs: needsValue,
-          Resources: resourcesValue,
-          Volunteers: volunteersValue,
-          change,
-        });
-      }
+          fallbackData.push({
+            label:
+              timeRange === "24h"
+                ? format(date, "HH:00")
+                : timeRange === "7d"
+                  ? format(date, "EEE")
+                  : format(date, "MMM d"),
+            timestamp: date,
+            Needs: needsValue,
+            Resources: resourcesValue,
+            Volunteers: volunteersValue,
+            change,
+          });
+        }
 
-      setChartData(data);
-      setLoading(false);
-    }, 800); // Reduced loading time slightly
+        setChartData(fallbackData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTrendData();
   }, [timeRange]);
 
   return (
@@ -174,7 +172,7 @@ export function TrendChart() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Trend Analysis</h2>
         <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as "24h" | "7d" | "30d")}>
             <SelectTrigger className="w-[100px]">
               <SelectValue placeholder="Time Range" />
             </SelectTrigger>

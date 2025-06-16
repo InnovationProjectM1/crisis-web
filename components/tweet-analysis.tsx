@@ -28,6 +28,15 @@ import {
   Search,
   ThumbsUp,
 } from "lucide-react";
+import { apiService, Tweet } from "@/lib/api";
+
+// Helper function pour formater le temps
+function formatTime(timestamp: string): string {
+  return new Date(timestamp).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
@@ -195,7 +204,6 @@ function ChartContainer({
             ))}
           </Pie>
           <Tooltip />
-          <Legend />
         </PieChart>
       </ResponsiveContainer>
     </div>
@@ -204,72 +212,41 @@ function ChartContainer({
 
 export function TweetAnalysis() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedTweet, setSelectedTweet] = useState<Tweet | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading tweets
+    // Charger les tweets depuis l'API
     const loadTweets = async () => {
       setLoading(true);
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const sampleTweets = Array(50)
-        .fill(0)
-        .map((_, index) => {
-          const categories = ["need", "resource", "alert"];
-          const urgencies = ["low", "medium", "high"];
-          const category = categories[
-            Math.floor(Math.random() * categories.length)
-          ] as "need" | "resource" | "alert";
-          const urgency = urgencies[
-            Math.floor(Math.random() * urgencies.length)
-          ] as "low" | "medium" | "high";
-          const verified = Math.random() > 0.3;
-
-          return {
-            id: `tweet-${index + 1}`,
-            text: `${category === "need" ? "Need" : category === "resource" ? "Offering" : "Alert"}: ${
-              [
-                "water supplies",
-                "medical assistance",
-                "shelter",
-                "food distribution",
-                "transportation",
-                "volunteers",
-                "power generators",
-                "communication devices",
-              ][Math.floor(Math.random() * 8)]
-            } at ${["North", "South", "East", "West", "Central", "Downtown"][Math.floor(Math.random() * 6)]} district.`,
-            timestamp: new Date(
-              Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7,
-            ).toISOString(),
-            username: `user${Math.floor(Math.random() * 1000)}`,
-            category,
-            urgency,
-            location: `${["North", "South", "East", "West", "Central", "Downtown"][Math.floor(Math.random() * 6)]} District`,
-            coordinates: {
-              lat: 34.05 + (Math.random() - 0.5) * 0.1,
-              lng: -118.25 + (Math.random() - 0.5) * 0.1,
-            },
-            verified,
-            sentiment: Math.random() * 2 - 1, // -1 to 1
-            keywords: [
-              ["water", "supplies", "need", "urgent"],
-              ["medical", "assistance", "doctors", "nurses"],
-              ["shelter", "housing", "accommodation"],
-              ["food", "meals", "hungry", "distribution"],
-              ["transportation", "vehicles", "evacuation"],
-              ["volunteers", "help", "assistance"],
-              ["power", "electricity", "generators"],
-              ["communication", "phones", "internet"],
-            ][Math.floor(Math.random() * 8)],
-          };
-        });
-
-      setTweets(sampleTweets);
-      setLoading(false);
+      try {
+        const apiTweets = await apiService.getTweets();
+        setTweets(apiTweets);
+        if (apiTweets.length > 0) {
+          setSelectedTweet(apiTweets[0]);
+        }
+      } catch (error) {
+        console.error('Error loading tweets:', error);
+        // Fallback avec quelques tweets d'exemple en cas d'erreur
+        const fallbackTweets: Tweet[] = [
+          {
+            id: "1",
+            text: "API connection failed - showing demo data",
+            timestamp: new Date().toISOString(),
+            username: "SystemAlert",
+            category: "alert",
+            urgency: "high",
+            location: "System",
+            coordinates: { lat: 34.052, lng: -118.243 },
+            verified: false,
+          }
+        ];
+        setTweets(fallbackTweets);
+        setSelectedTweet(fallbackTweets[0]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadTweets();
@@ -285,306 +262,241 @@ export function TweetAnalysis() {
     setSelectedTweet(tweet);
   };
 
-  // Calculer les statistiques une seule fois au lieu de multiples appels filter redondants
-  const statistics = {
-    needsCount: tweets.filter((t) => t.category === "need").length,
-    resourcesCount: tweets.filter((t) => t.category === "resource").length,
-    alertsCount: tweets.filter((t) => t.category === "alert").length,
-    urgentCount: tweets.filter((t) => t.urgency === "high").length,
-    verifiedCount: tweets.filter((t) => t.verified).length,
-  };
-
+  // Generate analytics data based on filtered tweets
   const categoryData = [
-    { name: "Needs", value: statistics.needsCount },
-    { name: "Resources", value: statistics.resourcesCount },
-    { name: "Alerts", value: statistics.alertsCount },
+    {
+      name: "Need",
+      value: filteredTweets.filter((tweet) => tweet.category === "need").length,
+    },
+    {
+      name: "Resource",
+      value: filteredTweets.filter((tweet) => tweet.category === "resource").length,
+    },
+    {
+      name: "Alert",
+      value: filteredTweets.filter((tweet) => tweet.category === "alert").length,
+    },
   ];
 
   const urgencyData = [
-    { name: "High", value: tweets.filter((t) => t.urgency === "high").length },
+    {
+      name: "High",
+      value: filteredTweets.filter((tweet) => tweet.urgency === "high").length,
+    },
     {
       name: "Medium",
-      value: tweets.filter((t) => t.urgency === "medium").length,
+      value: filteredTweets.filter((tweet) => tweet.urgency === "medium").length,
     },
-    { name: "Low", value: tweets.filter((t) => t.urgency === "low").length },
+    {
+      name: "Low",
+      value: filteredTweets.filter((tweet) => tweet.urgency === "low").length,
+    },
   ];
 
-  // Calcul optimisé pour éviter de filtrer plusieurs fois
-  const locationCounts = tweets.reduce(
-    (acc, tweet) => {
-      const location = tweet.location.split(" ")[0]; // Extraire la partie Nord, Sud, etc.
-      acc[location] = (acc[location] || 0) + 1;
+  const locationData = Object.entries(
+    filteredTweets.reduce((acc, tweet) => {
+      acc[tweet.location] = (acc[tweet.location] || 0) + 1;
       return acc;
+    }, {} as Record<string, number>),
+  ).map(([location, count]) => ({
+    name: location,
+    value: count,
+  }));
+
+  const verificationData = [
+    {
+      name: "Verified",
+      value: filteredTweets.filter((tweet) => tweet.verified).length,
     },
-    {} as Record<string, number>,
-  );
-
-  const locationData = Object.entries(locationCounts)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-
-  const COLORS = [
-    "#0088FE",
-    "#00C49F",
-    "#FFBB28",
-    "#FF8042",
-    "#8884D8",
-    "#82CA9D",
+    {
+      name: "Unverified",
+      value: filteredTweets.filter((tweet) => !tweet.verified).length,
+    },
   ];
+
+  const categoryColors = ["#ef4444", "#22c55e", "#f59e0b"];
+  const urgencyColors = ["#dc2626", "#f59e0b", "#10b981"];
+  const locationColors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b"];
+  const verificationColors = ["#22c55e", "#ef4444"];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4">
-        <Card className="flex-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Tweet Search & Analysis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search tweets..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+    <div className="flex h-full gap-4">
+      {/* Left Panel - Tweet List */}
+      <Card className="w-80 flex flex-col">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Tweet Analysis</CardTitle>
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tweets..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="flex-1 p-0">
+          <ScrollArea className="h-full px-4">
+            <div className="space-y-2 pb-4">
+              {filteredTweets.map((tweet) => (
+                <TweetCard
+                  key={tweet.id}
+                  tweet={tweet}
+                  isSelected={selectedTweet?.id === tweet.id}
+                  onClick={() => handleTweetClick(tweet)}
                 />
-              </div>
+              ))}
+              {filteredTweets.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No tweets found
+                </div>
+              )}
             </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
 
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">
-                  {statistics.needsCount}
-                </div>
-                <div className="text-xs text-muted-foreground">Needs</div>
-              </div>
-              <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">
-                  {statistics.resourcesCount}
-                </div>
-                <div className="text-xs text-muted-foreground">Resources</div>
-              </div>
-              <div className="flex flex-col items-center justify-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl font-bold">
-                  {statistics.alertsCount}
-                </div>
-                <div className="text-xs text-muted-foreground">Alerts</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              <div className="flex flex-col items-center justify-center p-3 bg-red-500/10 rounded-lg">
-                <div className="text-2xl font-bold text-red-500">
-                  {statistics.urgentCount}
-                </div>
-                <div className="text-xs text-muted-foreground">Urgent</div>
-              </div>
-              <div className="flex flex-col items-center justify-center p-3 bg-green-500/10 rounded-lg">
-                <div className="text-2xl font-bold text-green-500">
-                  {statistics.verifiedCount}
-                </div>
-                <div className="text-xs text-muted-foreground">Verified</div>
-              </div>
-            </div>
-
-            <ScrollArea className="h-[400px] border rounded-md">
-              <div className="p-4 space-y-3">
-                {loading ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
-                ) : filteredTweets.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    No tweets found
-                  </div>
-                ) : (
-                  filteredTweets.map((tweet) => (
-                    <TweetCard
-                      key={tweet.id}
-                      tweet={tweet}
-                      isSelected={selectedTweet?.id === tweet.id}
-                      onClick={() => handleTweetClick(tweet)}
-                    />
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <div className="flex flex-col gap-4 md:w-[400px]">
+      {/* Right Panel - Details and Analytics */}
+      <div className="flex-1 flex flex-col gap-4">
+        {/* Tweet Details */}
+        {selectedTweet && (
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Tweet Details</CardTitle>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg">@{selectedTweet.username}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {formatTime(selectedTweet.timestamp)} • {selectedTweet.location}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CategoryBadge category={selectedTweet.category} />
+                  <UrgencyBadge isUrgent={selectedTweet.urgency === "high"} />
+                  <VerifiedBadge isVerified={selectedTweet.verified} />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              {selectedTweet ? (
-                <div className="space-y-4">
-                  <div className="p-3 border rounded-lg">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="font-medium">
-                        @{selectedTweet.username}
-                      </div>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        {formatTime(selectedTweet.timestamp)}
-                      </div>
-                    </div>
-
-                    <p className="text-sm mb-2">{selectedTweet.text}</p>
-
-                    <div className="flex items-center gap-1.5">
-                      <CategoryBadge category={selectedTweet.category} />
-                      <UrgencyBadge
-                        isUrgent={selectedTweet.urgency === "high"}
-                      />
-                      <VerifiedBadge isVerified={selectedTweet.verified} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedTweet.location}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm">
-                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                      <span>ID: {selectedTweet.id}</span>
-                    </div>
-
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium mb-2">
-                        Sentiment Analysis
-                      </h4>
-                      <div className="w-full h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full">
-                        <div
-                          className="h-4 w-1 bg-black rounded-full relative -top-1"
-                          style={{
-                            marginLeft: `${((selectedTweet.sentiment + 1) / 2) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                        <span>Negative</span>
-                        <span>Neutral</span>
-                        <span>Positive</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium mb-2">Keywords</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedTweet.keywords.map((keyword, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {keyword}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 mt-4">
-                    <Button size="sm" className="flex-1">
-                      Verify
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      Flag
-                    </Button>
-                  </div>
+              <p className="text-sm mb-4">{selectedTweet.text}</p>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Category:</span> {selectedTweet.category}
                 </div>
-              ) : (
-                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                  Select a tweet to view details
+                <div>
+                  <span className="font-medium">Urgency:</span> {selectedTweet.urgency}
+                </div>
+                <div>
+                  <span className="font-medium">Location:</span> {selectedTweet.location}
+                </div>
+                <div>
+                  <span className="font-medium">Verified:</span> {selectedTweet.verified ? "Yes" : "No"}
+                </div>
+              </div>
+
+              {selectedTweet.classifier && (
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Classification Details</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="font-medium">Group:</span> {selectedTweet.classifier.classified_group}
+                    </div>
+                    <div>
+                      <span className="font-medium">Sub-group:</span> {selectedTweet.classifier.classified_sub_group}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Difficulty:</span> {selectedTweet.classifier.difficulty}
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
+        )}
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Tweet Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="category">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="category">Category</TabsTrigger>
-              <TabsTrigger value="urgency">Urgency</TabsTrigger>
-              <TabsTrigger value="location">Location</TabsTrigger>
-            </TabsList>
+        {/* Analytics */}
+        <Tabs defaultValue="category" className="flex-1">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="category">Category</TabsTrigger>
+            <TabsTrigger value="urgency">Urgency</TabsTrigger>
+            <TabsTrigger value="location">Location</TabsTrigger>
+            <TabsTrigger value="verification">Verification</TabsTrigger>
+          </TabsList>
 
-            <div className="mt-4 h-[300px]">
-              <TabsContent value="category" className="h-full">
+          <TabsContent value="category" className="flex-1">
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="text-base">Category Distribution</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[240px]">
                 <ChartContainer
                   barData={categoryData}
                   pieData={categoryData}
                   barDataKey="value"
-                  colors={COLORS}
+                  colors={categoryColors}
                 />
-              </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="urgency" className="h-full">
+          <TabsContent value="urgency" className="flex-1">
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="text-base">Urgency Levels</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[240px]">
                 <ChartContainer
                   barData={urgencyData}
                   pieData={urgencyData}
                   barDataKey="value"
-                  barFill="#ff8042"
-                  colors={COLORS}
+                  colors={urgencyColors}
                 />
-              </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="location" className="h-full">
+          <TabsContent value="location" className="flex-1">
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="text-base">Location Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[240px]">
                 <ChartContainer
                   barData={locationData}
                   pieData={locationData}
                   barDataKey="value"
-                  barFill="#00c49f"
+                  colors={locationColors}
                   vertical={true}
-                  colors={COLORS}
                 />
-              </TabsContent>
-            </div>
-          </Tabs>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="verification" className="flex-1">
+            <Card className="h-[300px]">
+              <CardHeader>
+                <CardTitle className="text-base">Verification Status</CardTitle>
+              </CardHeader>
+              <CardContent className="h-[240px]">
+                <ChartContainer
+                  barData={verificationData}
+                  pieData={verificationData}
+                  barDataKey="value"
+                  colors={verificationColors}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
-}
-
-interface Tweet {
-  id: string;
-  text: string;
-  timestamp: string;
-  username: string;
-  category: "need" | "resource" | "alert";
-  urgency: "low" | "medium" | "high";
-  location: string;
-  coordinates: { lat: number; lng: number };
-  verified: boolean;
-  sentiment: number;
-  keywords: string[];
-}
-
-function formatTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) {
-    return "Just now";
-  } else if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  } else if (diffMins < 1440) {
-    return `${Math.floor(diffMins / 60)}h ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
 }

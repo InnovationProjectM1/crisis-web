@@ -10,6 +10,7 @@ import {
   Home,
   MapPin,
   MessageSquare,
+  Settings,
 } from "lucide-react";
 
 // Update the SidebarProps interface to include currentPage
@@ -80,12 +81,17 @@ function NavItems({ currentPage }: NavItemsProps) {
         label="Resource Map"
         href="/resource-map"
         active={currentPage === "Resource Map"}
-      />{" "}
-      <NavItem
+      />{" "}      <NavItem
         icon={<BarChart4 />}
         label="Trends"
         href="/trends"
         active={currentPage === "Trends"}
+      />
+      <NavItem
+        icon={<Settings />}
+        label="API Test"
+        href="/api-test"
+        active={currentPage === "API Test"}
       />
     </>
   );
