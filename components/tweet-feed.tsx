@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Clock, MapPin, ThumbsUp } from "lucide-react";
 import { formatTweetTime } from "@/lib/date-utils";
+import { apiService, Tweet } from "@/lib/api";
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
@@ -108,137 +109,40 @@ export function TweetFeed() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    // Simulate loading tweets
+    // Charger les tweets depuis l'API
     const loadTweets = async () => {
       setLoading(true);
-      // In a real app, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setTweets([
-        {
-          id: "1",
-          text: "Urgent: Need medical supplies at Memorial Hospital. Running low on antibiotics and bandages. #CrisisResponse",
-          timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          username: "EmergencyResp",
-          category: "need",
-          urgency: "high",
-          location: "Memorial Hospital, Downtown",
-          coordinates: { lat: 34.052, lng: -118.243 },
-          verified: true,
-        },
-        {
-          id: "2",
-          text: "We have 20 cots and blankets available for distribution at the community center. Can deliver within 5 miles. #Resources",
-          timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-          username: "CommunityCtr",
-          category: "resource",
-          urgency: "medium",
-          location: "Central Community Center",
-          coordinates: { lat: 34.048, lng: -118.258 },
-          verified: true,
-        },
-        {
-          id: "3",
-          text: "Need volunteers for debris clearing in Westside neighborhood. Tools provided. #Volunteers #CleanUp",
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          username: "WestsideHelp",
-          category: "need",
-          urgency: "medium",
-          location: "Westside Neighborhood",
-          coordinates: { lat: 34.041, lng: -118.269 },
-          verified: false,
-        },
-        {
-          id: "4",
-          text: "URGENT: Flooding reported on Main St and 5th Ave. Roads impassable. Seek alternate routes. #FloodAlert",
-          timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-          username: "CityAlerts",
-          category: "alert",
-          urgency: "high",
-          location: "Main St & 5th Ave",
-          coordinates: { lat: 34.056, lng: -118.239 },
-          verified: true,
-        },
-        {
-          id: "5",
-          text: "Offering free transportation for elderly/disabled from affected areas to shelters. DM for coordination. #Transportation",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-          username: "CommunityDrive",
-          category: "resource",
-          urgency: "medium",
-          location: "Citywide",
-          coordinates: { lat: 34.05, lng: -118.25 },
-          verified: true,
-        },
-      ]);
-      setLoading(false);
+      try {
+        const apiTweets = await apiService.getTweets();
+        setTweets(apiTweets);
+      } catch (error) {
+        console.error('Error loading tweets:', error);
+        // Fallback avec quelques tweets d'exemple en cas d'erreur
+        setTweets([
+          {
+            id: "1",
+            text: "API connection failed - showing demo data",
+            timestamp: new Date().toISOString(),
+            username: "SystemAlert",
+            category: "alert",
+            urgency: "high",
+            location: "System",
+            coordinates: { lat: 34.052, lng: -118.243 },
+            verified: false,
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadTweets();
 
-    // Simulation des tweets périodiques - optimisation avec cleanup
+    // Rafraîchir les données périodiquement
     const interval = setInterval(() => {
-      const generateRandomTweet = () => {
-        const categories = ["need", "resource", "alert"] as const;
-        const urgencies = ["low", "medium", "high"] as const;
-        const locations = [
-          "North",
-          "South",
-          "East",
-          "West",
-          "Central",
-          "Downtown",
-        ];
-        const randomCategory =
-          categories[Math.floor(Math.random() * categories.length)];
-        const randomLocation =
-          locations[Math.floor(Math.random() * locations.length)];
-
-        const newTweet: Tweet = {
-          id: `tweet-${Date.now()}`,
-          text: `${randomCategory === "need" ? "Need" : randomCategory === "resource" ? "Offering" : "Alert"}: ${
-            [
-              "water supplies",
-              "medical assistance",
-              "shelter",
-              "food distribution",
-              "transportation",
-              "volunteers",
-              "power generators",
-              "communication devices",
-            ][Math.floor(Math.random() * 8)]
-          } at ${randomLocation} district.`,
-          timestamp: new Date().toISOString(),
-          username: `user${Math.floor(Math.random() * 1000)}`,
-          category: randomCategory,
-          urgency: urgencies[Math.floor(Math.random() * urgencies.length)],
-          location: `${randomLocation} District`,
-          coordinates: {
-            lat: 34.05 + (Math.random() - 0.5) * 0.1,
-            lng: -118.25 + (Math.random() - 0.5) * 0.1,
-          },
-          verified: Math.random() > 0.7,
-        };
-
-        return newTweet;
-      };
-
-      // Ajout d'un nouveau tweet en gardant une liste d'une taille raisonnable
-      setTweets((prevTweets) => {
-        const newTweet = generateRandomTweet();
-        const updatedTweets = [newTweet, ...prevTweets].slice(0, 50); // Limite à 50 tweets
-        return updatedTweets;
-      });
-
-      // Auto-scroll au dernier tweet ajouté
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = 0;
-        }
-      }, 100);
-    }, 5000);
+      loadTweets();
+    }, 30000); // Toutes les 30 secondes
 
     return () => clearInterval(interval);
   }, []);
@@ -359,17 +263,4 @@ export function TweetFeed() {
       </Tabs>
     </div>
   );
-}
-
-// Types et utilitaires
-interface Tweet {
-  id: string;
-  text: string;
-  timestamp: string;
-  username: string;
-  category: "need" | "resource" | "alert";
-  urgency: "low" | "medium" | "high";
-  location: string;
-  coordinates: { lat: number; lng: number };
-  verified: boolean;
 }

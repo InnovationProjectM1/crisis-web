@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { apiService } from "@/lib/api";
 
 // Types pour améliorer la maintenabilité
 interface Resource {
@@ -30,42 +31,29 @@ export function ResourceMap() {
   const [mapType, setMapType] = useState<"standard" | "satellite">("standard");
 
   useEffect(() => {
-    // Simulation du chargement des données de la carte
+    // Charger les données de la carte depuis l'API
     const loadMapData = async () => {
       setLoading(true);
-      // Simulation d'un appel API
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      setRegions([
-        {
-          id: "downtown",
-          name: "Downtown",
-          position: [48.8566, 2.3522], // Paris (exemple)
-          needs: [
-            { type: "medical", count: 12, urgency: "high" },
-            { type: "food", count: 8, urgency: "medium" },
-            { type: "shelter", count: 5, urgency: "medium" },
-          ],
-          resources: [
-            { type: "volunteers", count: 20, urgency: "low" },
-            { type: "water", count: 15, urgency: "medium" },
-          ],
-        },
-        {
-          id: "north",
-          name: "North District",
-          position: [48.8666, 2.3622],
-          needs: [
-            { type: "water", count: 25, urgency: "high" },
-            { type: "power", count: 18, urgency: "high" },
-          ],
-          resources: [
-            { type: "medical", count: 5, urgency: "medium" },
-            { type: "food", count: 10, urgency: "low" },
-          ],
-        },
-      ]);
-      setLoading(false);
+      try {
+        const regionData = await apiService.getRegionData();
+        setRegions(regionData);
+      } catch (error) {
+        console.error('Error loading map data:', error);
+        // Fallback avec des données d'exemple en cas d'erreur API
+        setRegions([
+          {
+            id: "downtown",
+            name: "API Connection Failed",
+            position: [48.8566, 2.3522],
+            needs: [
+              { type: "medical", count: 1, urgency: "high" },
+            ],
+            resources: [],
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadMapData();

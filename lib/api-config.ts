@@ -1,22 +1,17 @@
 // Configuration de l'API
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
   ENDPOINTS: {
-    TWEETS: "/tweets",
-    CLASSIFIERS: "/classifiers",
-    TWEET_STATISTICS: "/tweets/statistics",
-    GROUP_STATISTICS: "/classifiers/statistics/groups",
-    DIFFICULTY_STATISTICS: "/classifiers/statistics/difficulty",
+    TWEETS: '/tweets',
+    CLASSIFIERS: '/classifiers',
+    TWEET_STATISTICS: '/tweets/statistics',
+    GROUP_STATISTICS: '/classifiers/statistics/groups',
+    DIFFICULTY_STATISTICS: '/classifiers/statistics/difficulty',
   },
   // Configuration pour les données géographiques par défaut
   DEFAULT_COORDINATES: {
-    LAT_BASE: [
-      48.8566, 48.8666, 48.8466, 48.8766, 48.8366, 48.8266, 48.8966, 48.8166,
-      48.8866,
-    ],
-    LNG_BASE: [
-      2.3522, 2.3622, 2.3422, 2.3722, 2.3322, 2.3222, 2.3822, 2.3122, 2.3922,
-    ],
+    LAT_BASE: [48.8566, 48.8666, 48.8466, 48.8766, 48.8366, 48.8266, 48.8966, 48.8166, 48.8866],
+    LNG_BASE: [2.3522, 2.3622, 2.3422, 2.3722, 2.3322, 2.3222, 2.3822, 2.3122, 2.3922],
     RANDOM_OFFSET: 0.01,
   },
   // Configuration pour les intervalles de rafraîchissement
@@ -61,10 +56,7 @@ export const buildApiUrl = (endpoint: string): string => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
 
-export const buildApiUrlWithParams = (
-  endpoint: string,
-  params: Record<string, string>,
-): string => {
+export const buildApiUrlWithParams = (endpoint: string, params: Record<string, string>): string => {
   const url = new URL(buildApiUrl(endpoint));
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -29,6 +29,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import { apiService, Tweet, GroupStatistics, DifficultyStatistics, TweetStatistics } from "@/lib/api";
 
 // Types pour une meilleure maintenance
 interface ChartData {
@@ -156,18 +157,177 @@ function MiniChart({
 export function TrendsAnalysis() {
   const [timeRange, setTimeRange] = useState("24h");
   const [chartType, setChartType] = useState<"line" | "bar">("line");
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());  const [loading, setLoading] = useState(true);
+  const [apiData, setApiData] = useState<{
+    tweets: Tweet[];
+    groupStats: GroupStatistics[];
+    difficultyStats: DifficultyStatistics[];
+    tweetStats: TweetStatistics;
+  }>({
+    tweets: [],
+    groupStats: [],
+    difficultyStats: [],
+    tweetStats: { total: 0, classified: 0, unclassified: 0 }
+  });
 
-  // Mémoriser les données générées pour éviter les re-calculs inutiles
-  const chartData = useMemo(() => {
-    // Ces données seraient normalement chargées à partir d'une API
-    return {
-      needs: generateTimeData([12, 15, 18, 14, 11, 19, 22]),
-      resources: generateTimeData([8, 11, 14, 17, 16, 14, 12]),
-      alerts: generateTimeData([5, 7, 4, 9, 8, 6, 3]),
-      responseTime: generateTimeData([45, 40, 38, 42, 36, 33, 30]),
+  // Charger les données depuis l'API
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [tweets, groupStats, difficultyStats, tweetStats] = await Promise.all([
+          apiService.getTweets(),
+          apiService.getGroupStatistics(),
+          apiService.getDifficultyStatistics(),
+          apiService.getTweetStatistics()
+        ]);
+        
+        setApiData({ tweets, groupStats, difficultyStats, tweetStats });
+      } catch (error) {
+        console.error('Error loading API data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    loadData();
   }, []);
+  // Mémoriser les données générées à partir de l'API
+  const chartData = useMemo(() => {
+    if (loading || !apiData.tweets.length) {
+      return {
+        needs: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
+        resources: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
+        alerts: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
+        responseTime: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
+        trendData: [],
+        categoryData: {
+          needs: [],
+          resources: [],
+          alerts: []
+        }
+      };
+    }
+
+    // Analyser les tweets par catégorie sur les 7 derniers jours
+    const now = new Date();
+    const days = 7;
+    const needsData = [];
+    const resourcesData = [];
+    const alertsData = [];
+    const responseTimeData = [];
+    const trendData = [];
+
+    // Générer les données de tendance basées sur le timeRange sélectionné
+    const periods = timeRange === '24h' ? 24 : timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+    const timeUnit = timeRange === '24h' ? 'hour' : 'day';
+    
+    for (let i = 0; i < Math.min(periods, 12); i++) { // Limiter à 12 points pour la lisibilité
+      const periodIndex = Math.floor((i * periods) / 12);
+      let startDate, endDate, name;
+      
+      if (timeUnit === 'hour') {
+        startDate = new Date(now.getTime() - (24 - periodIndex) * 60 * 60 * 1000);
+        endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+        name = startDate.getHours().toString().padStart(2, '0') + 'h';
+      } else {
+        startDate = new Date(now.getTime() - (periods - periodIndex) * 24 * 60 * 60 * 1000);
+        endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+        name = startDate.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+      }
+      
+      const periodTweets = apiData.tweets.filter(tweet => {
+        const tweetDate = new Date(tweet.timestamp);
+        return tweetDate >= startDate && tweetDate < endDate;
+      });
+
+      const needsCount = periodTweets.filter(t => t.category === 'need').length;
+      const resourcesCount = periodTweets.filter(t => t.category === 'resource').length;
+      const alertsCount = periodTweets.filter(t => t.category === 'alert').length;
+
+      trendData.push({
+        name,
+        needs: needsCount,
+        resources: resourcesCount,
+        alerts: alertsCount
+      });
+    }
+
+    // Données pour les mini-charts (derniers 7 jours)
+    for (let i = 0; i < days; i++) {
+      const startDate = new Date(now.getTime() - (days - i - 1) * 24 * 60 * 60 * 1000);
+      const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+      
+      const dayTweets = apiData.tweets.filter(tweet => {
+        const tweetDate = new Date(tweet.timestamp);
+        return tweetDate >= startDate && tweetDate < endDate;
+      });
+
+      needsData.push(dayTweets.filter(t => t.category === 'need').length);
+      resourcesData.push(dayTweets.filter(t => t.category === 'resource').length);
+      alertsData.push(dayTweets.filter(t => t.category === 'alert').length);
+      
+      // Simuler le temps de réponse basé sur l'urgence
+      const urgentTweets = dayTweets.filter(t => t.urgency === 'high').length;
+      const avgResponseTime = urgentTweets > 0 ? Math.max(20, 60 - urgentTweets * 5) : 45;
+      responseTimeData.push(avgResponseTime);
+    }    // Analyser les sous-catégories pour les graphiques détaillés
+    const subcategoryCount = (category: string, subcategory: string) => {
+      return apiData.tweets.filter(t => t.category === category && 
+        t.text?.toLowerCase().includes(subcategory.toLowerCase())
+      ).length;
+    };
+
+    const categoryData = {
+      needs: [
+        { name: "Medical", value: subcategoryCount('need', 'medical') || subcategoryCount('need', 'health') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.3) },
+        { name: "Food", value: subcategoryCount('need', 'food') || subcategoryCount('need', 'nutrition') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.25) },
+        { name: "Shelter", value: subcategoryCount('need', 'shelter') || subcategoryCount('need', 'housing') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.2) },
+        { name: "Water", value: subcategoryCount('need', 'water') || subcategoryCount('need', 'drink') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.15) },
+        { name: "Transport", value: subcategoryCount('need', 'transport') || subcategoryCount('need', 'travel') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'need').length * 0.1) },
+      ].sort((a, b) => b.value - a.value),
+      
+      resources: [
+        { name: "Volunteers", value: subcategoryCount('resource', 'volunteer') || subcategoryCount('resource', 'help') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.3) },
+        { name: "Medical", value: subcategoryCount('resource', 'medical') || subcategoryCount('resource', 'health') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.25) },
+        { name: "Food", value: subcategoryCount('resource', 'food') || subcategoryCount('resource', 'nutrition') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.2) },
+        { name: "Equipment", value: subcategoryCount('resource', 'equipment') || subcategoryCount('resource', 'tools') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.15) },
+        { name: "Shelter", value: subcategoryCount('resource', 'shelter') || subcategoryCount('resource', 'housing') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'resource').length * 0.1) },
+      ].sort((a, b) => b.value - a.value),
+      
+      alerts: [
+        { name: "Emergency", value: subcategoryCount('alert', 'emergency') || subcategoryCount('alert', 'urgent') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.3) },
+        { name: "Weather", value: subcategoryCount('alert', 'weather') || subcategoryCount('alert', 'storm') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.25) },
+        { name: "Infrastructure", value: subcategoryCount('alert', 'power') || subcategoryCount('alert', 'road') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.2) },
+        { name: "Safety", value: subcategoryCount('alert', 'safety') || subcategoryCount('alert', 'danger') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.15) },
+        { name: "Health", value: subcategoryCount('alert', 'health') || subcategoryCount('alert', 'medical') || 
+          Math.floor(apiData.tweets.filter(t => t.category === 'alert').length * 0.1) },
+      ].sort((a, b) => b.value - a.value)
+    };
+
+    return {
+      needs: generateTimeData(needsData),
+      resources: generateTimeData(resourcesData),
+      alerts: generateTimeData(alertsData),
+      responseTime: generateTimeData(responseTimeData),
+      trendData,
+      categoryData
+    };
+  }, [apiData, loading, timeRange]);
 
   return (
     <div className="space-y-6">
@@ -194,33 +354,32 @@ export function TrendsAnalysis() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MiniChart
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">        <MiniChart
           data={chartData.needs}
           title="Reported Needs"
-          value="128"
-          change="+14% from last period"
-          changeType="positive"
+          value={loading ? "..." : apiData.tweets.filter(t => t.category === 'need').length.toString()}
+          change={loading ? "..." : `${apiData.tweetStats.total} total tweets`}
+          changeType="neutral"
         />
         <MiniChart
           data={chartData.resources}
           title="Available Resources"
-          value="85"
-          change="-5% from last period"
-          changeType="negative"
+          value={loading ? "..." : apiData.tweets.filter(t => t.category === 'resource').length.toString()}
+          change={loading ? "..." : `${Math.round((apiData.tweets.filter(t => t.category === 'resource').length / Math.max(apiData.tweets.length, 1)) * 100)}% of total`}
+          changeType="positive"
         />
         <MiniChart
           data={chartData.alerts}
           title="Active Alerts"
-          value="24"
-          change="No change from last period"
-          changeType="neutral"
+          value={loading ? "..." : apiData.tweets.filter(t => t.category === 'alert').length.toString()}
+          change={loading ? "..." : `${apiData.tweets.filter(t => t.urgency === 'high').length} high priority`}
+          changeType="negative"
         />
         <MiniChart
           data={chartData.responseTime}
-          title="Avg. Response Time (min)"
-          value="36"
-          change="-12% from last period"
+          title="Classified Tweets"
+          value={loading ? "..." : apiData.tweetStats.classified.toString()}
+          change={loading ? "..." : `${Math.round((apiData.tweetStats.classified / Math.max(apiData.tweetStats.total, 1)) * 100)}% classified`}
           changeType="positive"
         />
       </div>
@@ -260,21 +419,11 @@ export function TrendsAnalysis() {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>
-            {/* Affichage d'un graphique personnalisé au lieu d'utiliser TrendChart qui a des propriétés incompatibles */}
-            <div className="h-[300px] w-full">
+          <CardContent>            <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === "line" ? (
                   <LineChart
-                    data={[
-                      { name: "Jan", needs: 65, resources: 45, alerts: 12 },
-                      { name: "Feb", needs: 59, resources: 48, alerts: 10 },
-                      { name: "Mar", needs: 80, resources: 52, alerts: 15 },
-                      { name: "Apr", needs: 81, resources: 60, alerts: 14 },
-                      { name: "May", needs: 56, resources: 45, alerts: 8 },
-                      { name: "Jun", needs: 55, resources: 48, alerts: 9 },
-                      { name: "Jul", needs: 72, resources: 62, alerts: 11 },
-                    ]}
+                    data={chartData.trendData}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -286,40 +435,35 @@ export function TrendsAnalysis() {
                       dataKey="needs"
                       stroke="#ef4444"
                       strokeWidth={2}
+                      name="Needs"
                     />
                     <Line
                       type="monotone"
                       dataKey="resources"
                       stroke="#3b82f6"
                       strokeWidth={2}
+                      name="Resources"
                     />
                     <Line
                       type="monotone"
                       dataKey="alerts"
                       stroke="#f59e0b"
                       strokeWidth={2}
+                      name="Alerts"
                     />
                   </LineChart>
                 ) : (
                   <BarChart
-                    data={[
-                      { name: "Jan", needs: 65, resources: 45, alerts: 12 },
-                      { name: "Feb", needs: 59, resources: 48, alerts: 10 },
-                      { name: "Mar", needs: 80, resources: 52, alerts: 15 },
-                      { name: "Apr", needs: 81, resources: 60, alerts: 14 },
-                      { name: "May", needs: 56, resources: 45, alerts: 8 },
-                      { name: "Jun", needs: 55, resources: 48, alerts: 9 },
-                      { name: "Jul", needs: 72, resources: 62, alerts: 11 },
-                    ]}
+                    data={chartData.trendData}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="needs" fill="#ef4444" />
-                    <Bar dataKey="resources" fill="#3b82f6" />
-                    <Bar dataKey="alerts" fill="#f59e0b" />
+                    <Bar dataKey="needs" fill="#ef4444" name="Needs" />
+                    <Bar dataKey="resources" fill="#3b82f6" name="Resources" />
+                    <Bar dataKey="alerts" fill="#f59e0b" name="Alerts" />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -347,36 +491,10 @@ export function TrendsAnalysis() {
               <TabsTrigger value="resources">Resources</TabsTrigger>
               <TabsTrigger value="alerts">Alerts</TabsTrigger>
             </TabsList>
-            <div className="h-[300px] mt-4">
-              <TabsContent value="needs" className="h-full">
+            <div className="h-[300px] mt-4">              <TabsContent value="needs" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={[
-                      {
-                        name: "Medical",
-                        value: 65,
-                      },
-                      {
-                        name: "Food",
-                        value: 40,
-                      },
-                      {
-                        name: "Shelter",
-                        value: 35,
-                      },
-                      {
-                        name: "Water",
-                        value: 30,
-                      },
-                      {
-                        name: "Transport",
-                        value: 15,
-                      },
-                      {
-                        name: "Clothing",
-                        value: 12,
-                      },
-                    ]}
+                    data={chartData.categoryData.needs}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -387,36 +505,10 @@ export function TrendsAnalysis() {
                     <Bar dataKey="value" fill="#ef4444" />
                   </BarChart>
                 </ResponsiveContainer>
-              </TabsContent>
-              <TabsContent value="resources" className="h-full">
+              </TabsContent>              <TabsContent value="resources" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={[
-                      {
-                        name: "Volunteers",
-                        value: 48,
-                      },
-                      {
-                        name: "Medical",
-                        value: 35,
-                      },
-                      {
-                        name: "Food",
-                        value: 28,
-                      },
-                      {
-                        name: "Equipment",
-                        value: 25,
-                      },
-                      {
-                        name: "Shelter",
-                        value: 18,
-                      },
-                      {
-                        name: "Transport",
-                        value: 12,
-                      },
-                    ]}
+                    data={chartData.categoryData.resources}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -427,36 +519,10 @@ export function TrendsAnalysis() {
                     <Bar dataKey="value" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>
-              </TabsContent>
-              <TabsContent value="alerts" className="h-full">
+              </TabsContent>              <TabsContent value="alerts" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={[
-                      {
-                        name: "Flooding",
-                        value: 12,
-                      },
-                      {
-                        name: "Fire",
-                        value: 8,
-                      },
-                      {
-                        name: "Power Outage",
-                        value: 6,
-                      },
-                      {
-                        name: "Road Closure",
-                        value: 5,
-                      },
-                      {
-                        name: "Medical",
-                        value: 4,
-                      },
-                      {
-                        name: "Security",
-                        value: 2,
-                      },
-                    ]}
+                    data={chartData.categoryData.alerts}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />

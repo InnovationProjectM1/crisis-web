@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import dynamic from "next/dynamic";
+import { apiService, Tweet } from "@/lib/api";
 
 // Types
 interface HeatmapData {
@@ -42,90 +43,32 @@ export function RegionalHeatmap() {
   const [loading, setLoading] = useState(true);
   const [dataType, setDataType] = useState("needs");
   const [selectedRegion, setSelectedRegion] = useState<RegionType | null>(null);
-
   useEffect(() => {
-    // Simulate loading heatmap data
+    // Charger les données de heatmap depuis l'API
     const loadHeatmapData = async () => {
-      setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setHeatmapData({
-        regions: [
-          {
-            id: "r1",
-            name: "Downtown",
-            lat: 48.8566,
-            lng: 2.3522,
-            needsIntensity: 0.9,
-            resourcesIntensity: 0.4,
-          },
-          {
-            id: "r2",
-            name: "North District",
-            lat: 48.8666,
-            lng: 2.3522,
-            needsIntensity: 0.7,
-            resourcesIntensity: 0.3,
-          },
-          {
-            id: "r3",
-            name: "East District",
-            lat: 48.8566,
-            lng: 2.3622,
-            needsIntensity: 0.5,
-            resourcesIntensity: 0.6,
-          },
-          {
-            id: "r4",
-            name: "South District",
-            lat: 48.8466,
-            lng: 2.3522,
-            needsIntensity: 0.3,
-            resourcesIntensity: 0.8,
-          },
-          {
-            id: "r5",
-            name: "West District",
-            lat: 48.8566,
-            lng: 2.3422,
-            needsIntensity: 0.6,
-            resourcesIntensity: 0.5,
-          },
-          {
-            id: "r6",
-            name: "Northwest",
-            lat: 48.8666,
-            lng: 2.3422,
-            needsIntensity: 0.4,
-            resourcesIntensity: 0.2,
-          },
-          {
-            id: "r7",
-            name: "Northeast",
-            lat: 48.8666,
-            lng: 2.3622,
-            needsIntensity: 0.2,
-            resourcesIntensity: 0.7,
-          },
-          {
-            id: "r8",
-            name: "Southeast",
-            lat: 48.8466,
-            lng: 2.3622,
-            needsIntensity: 0.8,
-            resourcesIntensity: 0.3,
-          },
-          {
-            id: "r9",
-            name: "Southwest",
-            lat: 48.8466,
-            lng: 2.3422,
-            needsIntensity: 0.5,
-            resourcesIntensity: 0.9,
-          },
-        ],
-      });
-      setLoading(false);
+      setLoading(true);      try {
+        const heatmapDataResult = await apiService.getHeatmapData();
+        setHeatmapData(heatmapDataResult);
+      } catch (error) {
+        console.error('Error loading heatmap data:', error);
+        // Fallback avec des données d'exemple en cas d'erreur API
+        setHeatmapData({
+          regions: [
+            {
+              id: "fallback",
+              name: "API Connection Failed",
+              lat: 48.8566,
+              lng: 2.3522,
+              needsIntensity: 0.5,
+              resourcesIntensity: 0.3,
+            },
+          ],
+        });
+      } finally {
+        setLoading(false);
+      }
     };
+    
     loadHeatmapData();
   }, []);
 
