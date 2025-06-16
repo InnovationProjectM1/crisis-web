@@ -81,7 +81,8 @@ function NavItems({ currentPage }: NavItemsProps) {
         label="Resource Map"
         href="/resource-map"
         active={currentPage === "Resource Map"}
-      />{" "}      <NavItem
+      />{" "}
+      <NavItem
         icon={<BarChart4 />}
         label="Trends"
         href="/trends"

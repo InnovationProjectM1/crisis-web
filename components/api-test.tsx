@@ -5,11 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { apiService, Tweet, TweetStatistics, GroupStatistics, DifficultyStatistics } from "@/lib/api";
+import {
+  apiService,
+  Tweet,
+  TweetStatistics,
+  GroupStatistics,
+  DifficultyStatistics,
+} from "@/lib/api";
 
 interface TestResult {
   name: string;
-  status: 'success' | 'error' | 'loading';
+  status: "success" | "error" | "loading";
   data?: any;
   error?: string;
 }
@@ -26,15 +32,15 @@ export function ApiTest() {
     try {
       const tweets = await apiService.getTweets();
       testResults.push({
-        name: 'Get Tweets',
-        status: 'success',
-        data: `${tweets.length} tweets loaded`
+        name: "Get Tweets",
+        status: "success",
+        data: `${tweets.length} tweets loaded`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Tweets',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Tweets",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
@@ -42,15 +48,15 @@ export function ApiTest() {
     try {
       const stats = await apiService.getTweetStatistics();
       testResults.push({
-        name: 'Get Tweet Statistics',
-        status: 'success',
-        data: `Total: ${stats.total}, Classified: ${stats.classified}, Unclassified: ${stats.unclassified}`
+        name: "Get Tweet Statistics",
+        status: "success",
+        data: `Total: ${stats.total}, Classified: ${stats.classified}, Unclassified: ${stats.unclassified}`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Tweet Statistics',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Tweet Statistics",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
@@ -58,15 +64,15 @@ export function ApiTest() {
     try {
       const groupStats = await apiService.getGroupStatistics();
       testResults.push({
-        name: 'Get Group Statistics',
-        status: 'success',
-        data: `${groupStats.length} groups found`
+        name: "Get Group Statistics",
+        status: "success",
+        data: `${groupStats.length} groups found`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Group Statistics',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Group Statistics",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
@@ -74,31 +80,31 @@ export function ApiTest() {
     try {
       const difficultyStats = await apiService.getDifficultyStatistics();
       testResults.push({
-        name: 'Get Difficulty Statistics',
-        status: 'success',
-        data: `${difficultyStats.length} difficulty levels found`
+        name: "Get Difficulty Statistics",
+        status: "success",
+        data: `${difficultyStats.length} difficulty levels found`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Difficulty Statistics',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Difficulty Statistics",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
     // Test getTrendData
     try {
-      const trendData = await apiService.getTrendData('24h');
+      const trendData = await apiService.getTrendData("24h");
       testResults.push({
-        name: 'Get Trend Data (24h)',
-        status: 'success',
-        data: `${trendData.length} data points generated`
+        name: "Get Trend Data (24h)",
+        status: "success",
+        data: `${trendData.length} data points generated`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Trend Data (24h)',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Trend Data (24h)",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
@@ -106,15 +112,15 @@ export function ApiTest() {
     try {
       const regionData = await apiService.getRegionData();
       testResults.push({
-        name: 'Get Region Data',
-        status: 'success',
-        data: `${regionData.length} regions found`
+        name: "Get Region Data",
+        status: "success",
+        data: `${regionData.length} regions found`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Region Data',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Region Data",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
@@ -122,15 +128,15 @@ export function ApiTest() {
     try {
       const heatmapData = await apiService.getHeatmapData();
       testResults.push({
-        name: 'Get Heatmap Data',
-        status: 'success',
-        data: `${heatmapData.regions.length} heatmap regions found`
+        name: "Get Heatmap Data",
+        status: "success",
+        data: `${heatmapData.regions.length} heatmap regions found`,
       });
     } catch (error) {
       testResults.push({
-        name: 'Get Heatmap Data',
-        status: 'error',
-        error: (error as Error).message
+        name: "Get Heatmap Data",
+        status: "error",
+        error: (error as Error).message,
       });
     }
 
@@ -142,47 +148,55 @@ export function ApiTest() {
     runTests();
   }, []);
 
-  const getStatusIcon = (status: TestResult['status']) => {
+  const getStatusIcon = (status: TestResult["status"]) => {
     switch (status) {
-      case 'success':
+      case "success":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error':
+      case "error":
         return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'loading':
+      case "loading":
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       default:
         return null;
     }
   };
 
-  const getStatusBadge = (status: TestResult['status']) => {
+  const getStatusBadge = (status: TestResult["status"]) => {
     switch (status) {
-      case 'success':
-        return <Badge variant="default" className="bg-green-500">Success</Badge>;
-      case 'error':
+      case "success":
+        return (
+          <Badge variant="default" className="bg-green-500">
+            Success
+          </Badge>
+        );
+      case "error":
         return <Badge variant="destructive">Error</Badge>;
-      case 'loading':
+      case "loading":
         return <Badge variant="outline">Loading</Badge>;
       default:
         return null;
     }
   };
 
-  const successCount = results.filter(r => r.status === 'success').length;
-  const errorCount = results.filter(r => r.status === 'error').length;
+  const successCount = results.filter((r) => r.status === "success").length;
+  const errorCount = results.filter((r) => r.status === "error").length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">API Test Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            API Test Dashboard
+          </h1>
           <p className="text-muted-foreground">
             Test all API endpoints to ensure proper functionality
           </p>
         </div>
         <Button onClick={runTests} disabled={loading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Testing...' : 'Run Tests'}
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+          />
+          {loading ? "Testing..." : "Run Tests"}
         </Button>
       </div>
 
@@ -201,7 +215,9 @@ export function ApiTest() {
               <CardTitle className="text-sm font-medium">Successful</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-500">{successCount}</div>
+              <div className="text-2xl font-bold text-green-500">
+                {successCount}
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -209,7 +225,9 @@ export function ApiTest() {
               <CardTitle className="text-sm font-medium">Failed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-500">{errorCount}</div>
+              <div className="text-2xl font-bold text-red-500">
+                {errorCount}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -228,10 +246,10 @@ export function ApiTest() {
               </div>
             </CardHeader>
             <CardContent>
-              {result.status === 'success' && result.data && (
+              {result.status === "success" && result.data && (
                 <p className="text-sm text-muted-foreground">{result.data}</p>
               )}
-              {result.status === 'error' && result.error && (
+              {result.status === "error" && result.error && (
                 <p className="text-sm text-red-500">{result.error}</p>
               )}
             </CardContent>
@@ -242,7 +260,9 @@ export function ApiTest() {
       {results.length === 0 && !loading && (
         <Card>
           <CardContent className="flex items-center justify-center p-8">
-            <p className="text-muted-foreground">Click "Run Tests" to start testing the API</p>
+            <p className="text-muted-foreground">
+              Click "Run Tests" to start testing the API
+            </p>
           </CardContent>
         </Card>
       )}

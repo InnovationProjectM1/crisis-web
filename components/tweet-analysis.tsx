@@ -32,9 +32,9 @@ import { apiService, Tweet } from "@/lib/api";
 
 // Helper function pour formater le temps
 function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
+  return new Date(timestamp).toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -227,7 +227,7 @@ export function TweetAnalysis() {
           setSelectedTweet(apiTweets[0]);
         }
       } catch (error) {
-        console.error('Error loading tweets:', error);
+        console.error("Error loading tweets:", error);
         // Fallback avec quelques tweets d'exemple en cas d'erreur
         const fallbackTweets: Tweet[] = [
           {
@@ -240,7 +240,7 @@ export function TweetAnalysis() {
             location: "System",
             coordinates: { lat: 34.052, lng: -118.243 },
             verified: false,
-          }
+          },
         ];
         setTweets(fallbackTweets);
         setSelectedTweet(fallbackTweets[0]);
@@ -270,11 +270,13 @@ export function TweetAnalysis() {
     },
     {
       name: "Resource",
-      value: filteredTweets.filter((tweet) => tweet.category === "resource").length,
+      value: filteredTweets.filter((tweet) => tweet.category === "resource")
+        .length,
     },
     {
       name: "Alert",
-      value: filteredTweets.filter((tweet) => tweet.category === "alert").length,
+      value: filteredTweets.filter((tweet) => tweet.category === "alert")
+        .length,
     },
   ];
 
@@ -285,7 +287,8 @@ export function TweetAnalysis() {
     },
     {
       name: "Medium",
-      value: filteredTweets.filter((tweet) => tweet.urgency === "medium").length,
+      value: filteredTweets.filter((tweet) => tweet.urgency === "medium")
+        .length,
     },
     {
       name: "Low",
@@ -294,10 +297,13 @@ export function TweetAnalysis() {
   ];
 
   const locationData = Object.entries(
-    filteredTweets.reduce((acc, tweet) => {
-      acc[tweet.location] = (acc[tweet.location] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>),
+    filteredTweets.reduce(
+      (acc, tweet) => {
+        acc[tweet.location] = (acc[tweet.location] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
   ).map(([location, count]) => ({
     name: location,
     value: count,
@@ -316,7 +322,13 @@ export function TweetAnalysis() {
 
   const categoryColors = ["#ef4444", "#22c55e", "#f59e0b"];
   const urgencyColors = ["#dc2626", "#f59e0b", "#10b981"];
-  const locationColors = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b"];
+  const locationColors = [
+    "#3b82f6",
+    "#8b5cf6",
+    "#06b6d4",
+    "#10b981",
+    "#f59e0b",
+  ];
   const verificationColors = ["#22c55e", "#ef4444"];
 
   if (loading) {
@@ -372,9 +384,12 @@ export function TweetAnalysis() {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-lg">@{selectedTweet.username}</CardTitle>
+                  <CardTitle className="text-lg">
+                    @{selectedTweet.username}
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {formatTime(selectedTweet.timestamp)} • {selectedTweet.location}
+                    {formatTime(selectedTweet.timestamp)} •{" "}
+                    {selectedTweet.location}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -386,34 +401,43 @@ export function TweetAnalysis() {
             </CardHeader>
             <CardContent>
               <p className="text-sm mb-4">{selectedTweet.text}</p>
-              
+
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium">Category:</span> {selectedTweet.category}
+                  <span className="font-medium">Category:</span>{" "}
+                  {selectedTweet.category}
                 </div>
                 <div>
-                  <span className="font-medium">Urgency:</span> {selectedTweet.urgency}
+                  <span className="font-medium">Urgency:</span>{" "}
+                  {selectedTweet.urgency}
                 </div>
                 <div>
-                  <span className="font-medium">Location:</span> {selectedTweet.location}
+                  <span className="font-medium">Location:</span>{" "}
+                  {selectedTweet.location}
                 </div>
                 <div>
-                  <span className="font-medium">Verified:</span> {selectedTweet.verified ? "Yes" : "No"}
+                  <span className="font-medium">Verified:</span>{" "}
+                  {selectedTweet.verified ? "Yes" : "No"}
                 </div>
               </div>
 
               {selectedTweet.classifier && (
                 <div className="mt-4 p-3 bg-muted rounded-lg">
-                  <h4 className="font-medium text-sm mb-2">Classification Details</h4>
+                  <h4 className="font-medium text-sm mb-2">
+                    Classification Details
+                  </h4>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <span className="font-medium">Group:</span> {selectedTweet.classifier.classified_group}
+                      <span className="font-medium">Group:</span>{" "}
+                      {selectedTweet.classifier.classified_group}
                     </div>
                     <div>
-                      <span className="font-medium">Sub-group:</span> {selectedTweet.classifier.classified_sub_group}
+                      <span className="font-medium">Sub-group:</span>{" "}
+                      {selectedTweet.classifier.classified_sub_group}
                     </div>
                     <div className="col-span-2">
-                      <span className="font-medium">Difficulty:</span> {selectedTweet.classifier.difficulty}
+                      <span className="font-medium">Difficulty:</span>{" "}
+                      {selectedTweet.classifier.difficulty}
                     </div>
                   </div>
                 </div>
@@ -434,7 +458,9 @@ export function TweetAnalysis() {
           <TabsContent value="category" className="flex-1">
             <Card className="h-[300px]">
               <CardHeader>
-                <CardTitle className="text-base">Category Distribution</CardTitle>
+                <CardTitle className="text-base">
+                  Category Distribution
+                </CardTitle>
               </CardHeader>
               <CardContent className="h-[240px]">
                 <ChartContainer
