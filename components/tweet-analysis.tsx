@@ -20,7 +20,7 @@ import {
   Cell,
 } from "recharts";
 import { AlertTriangle, Clock, MapPin, Search, ThumbsUp } from "lucide-react";
-import { apiService, Tweet } from "@/lib/api";
+import { apiService, Category, Tweet } from '@/lib/api';
 
 // Helper function pour formater le temps
 function formatTime(timestamp: string): string {
@@ -32,7 +32,7 @@ function formatTime(timestamp: string): string {
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
-  category: "need" | "resource" | "alert";
+  category: Category;
   className?: string;
 }
 
@@ -227,7 +227,7 @@ export function TweetAnalysis() {
             text: "API connection failed - showing demo data",
             timestamp: new Date().toISOString(),
             username: "SystemAlert",
-            category: "alert",
+            category: "uncategorized",
             urgency: "high",
             location: "System",
             coordinates: { lat: 34.052, lng: -118.243 },
@@ -266,8 +266,8 @@ export function TweetAnalysis() {
         .length,
     },
     {
-      name: "Alert",
-      value: filteredTweets.filter((tweet) => tweet.category === "alert")
+      name: "Uncategorized",
+      value: filteredTweets.filter((tweet) => tweet.category === "uncategorized")
         .length,
     },
   ];

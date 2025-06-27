@@ -6,11 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Clock, MapPin, ThumbsUp } from "lucide-react";
 import { formatTweetTime } from "@/lib/date-utils";
-import { apiService, Tweet } from "@/lib/api";
+import { apiService, Category, Tweet } from '@/lib/api';
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
-  category: "need" | "resource" | "alert";
+  category: Category;
   className?: string;
 }
 
@@ -125,7 +125,7 @@ export function TweetFeed() {
             text: "API connection failed - showing demo data",
             timestamp: new Date().toISOString(),
             username: "SystemAlert",
-            category: "alert",
+            category: "uncategorized",
             urgency: "high",
             location: "System",
             coordinates: { lat: 34.052, lng: -118.243 },
@@ -164,7 +164,7 @@ export function TweetFeed() {
     (tweet) => tweet.category === "resource",
   );
   const alertTweets = filteredTweets.filter(
-    (tweet) => tweet.category === "alert",
+    (tweet) => tweet.category === "uncategorized",
   );
 
   // Fonction pour afficher les tweets selon la catégorie
@@ -227,9 +227,9 @@ export function TweetFeed() {
               )}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex-1">
+          <TabsTrigger value="uncategorized" className="flex-1">
             <div className="relative">
-              Alerts
+              Uncategorized
               {alertTweets.length > 0 && (
                 <Badge
                   variant={
@@ -256,7 +256,7 @@ export function TweetFeed() {
           <TabsContent value="resources" className="m-0 p-0 space-y-2">
             {renderTweets(resourceTweets)}
           </TabsContent>
-          <TabsContent value="alerts" className="m-0 p-0 space-y-2">
+          <TabsContent value="uncategorized" className="m-0 p-0 space-y-2">
             {renderTweets(alertTweets)}
           </TabsContent>
         </ScrollArea>

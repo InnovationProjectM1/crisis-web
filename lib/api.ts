@@ -2,7 +2,7 @@ import { API_CONFIG, buildApiUrl } from "./api-config";
 
 // Interface pour les tweets de l'API
 export interface ApiTweet {
-  tweet_id: number;
+  tweet_id: string;
   tweet_text: string;
   timestamp: Date;
   classifier?: ApiClassifier;
@@ -10,7 +10,7 @@ export interface ApiTweet {
 
 // Interface pour les classifiers de l'API
 export interface ApiClassifier {
-  tweet_id: number;
+  tweet_id: string;
   classified_group: string;
   classified_sub_group: string;
   difficulty: string;
@@ -40,20 +40,21 @@ export interface Tweet {
   text: string;
   timestamp: string;
   username: string;
-  category: "need" | "resource" | "alert";
+  category: Category;
   urgency: "low" | "medium" | "high";
   location: string;
-  coordinates: { lat: number; lng: number };
+  coordinates?: { lat: number; lng: number };
   verified: boolean;
-  original_tweet_id?: number;
   classifier?: ApiClassifier;
 }
+
+export type Category = "need" | "resource" | "uncategorized";
 
 // Mapping des groupes de classification vers les catégories du frontend
 const mapClassificationToCategory = (
   classifier?: ApiClassifier,
-): "need" | "resource" | "alert" => {
-  if (!classifier) return "alert";
+): "need" | "resource" | "uncategorized" => {
+  if (!classifier) return "uncategorized";
 
   const group = classifier.classified_group.toLowerCase();
   const subGroup = classifier.classified_sub_group.toLowerCase();
@@ -81,7 +82,7 @@ const mapClassificationToCategory = (
     return "resource";
   }
 
-  return "alert";
+  return "uncategorized";
 };
 
 // Mapping de la difficulté vers l'urgence
@@ -110,19 +111,14 @@ const convertApiTweetToFrontendTweet = (apiTweet: ApiTweet): Tweet => {
   const urgency = mapDifficultyToUrgency(apiTweet.classifier?.difficulty);
 
   return {
-    id: apiTweet.tweet_id.toString(),
+    id: apiTweet.tweet_id,
     text: apiTweet.tweet_text,
     timestamp: new Date(apiTweet.timestamp).toISOString(),
-    username: `user${apiTweet.tweet_id}`, // Généré car pas dans l'API
+    username: `ScrappedUser`,
     category,
     urgency,
-    location: apiTweet.classifier?.classified_sub_group || "Unknown Location",
-    coordinates: {
-      lat: 34.05 + (Math.random() - 0.5) * 0.1, // Coordonnées aléatoires pour la démo
-      lng: -118.25 + (Math.random() - 0.5) * 0.1,
-    },
-    verified: !!apiTweet.classifier, // Vérifié s'il y a une classification
-    original_tweet_id: apiTweet.tweet_id,
+    location: "Unknown Location",
+    verified: !!apiTweet.classifier, //=Classified
     classifier: apiTweet.classifier,
   };
 };
@@ -143,14 +139,6 @@ class ApiService {
     }
   }
 
-  async getApiTweets(): Promise<ApiTweet[]> {
-    const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.TWEETS));
-    if (!response.ok) {
-      throw new Error("Failed to fetch tweets");
-    }
-    return response.json() as Promise<ApiTweet[]>;
-  }
-
   async getTweet(id: number): Promise<ApiTweet> {
     const response = await fetch(
       buildApiUrl(`${API_CONFIG.ENDPOINTS.TWEETS}/${id}`),
@@ -159,62 +147,6 @@ class ApiService {
       throw new Error(`Failed to fetch tweet ${id}`);
     }
     return response.json() as Promise<ApiTweet>;
-  }
-
-  async createTweet(
-    tweetId: number,
-    tweetText: string,
-    timestamp?: Date,
-  ): Promise<ApiTweet> {
-    const tweetData: Partial<ApiTweet> = {
-      tweet_id: tweetId,
-      tweet_text: tweetText,
-    };
-
-    if (timestamp) {
-      tweetData.timestamp = timestamp;
-    }
-
-    const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.TWEETS), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(tweetData),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to create tweet");
-    }
-    return response.json() as Promise<ApiTweet>;
-  }
-
-  async updateTweet(id: number, tweetText: string): Promise<ApiTweet> {
-    const response = await fetch(
-      buildApiUrl(`${API_CONFIG.ENDPOINTS.TWEETS}/${id}`),
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tweet_text: tweetText }),
-      },
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to update tweet ${id}`);
-    }
-    return response.json() as Promise<ApiTweet>;
-  }
-
-  async deleteTweet(id: number): Promise<void> {
-    const response = await fetch(
-      buildApiUrl(`${API_CONFIG.ENDPOINTS.TWEETS}/${id}`),
-      {
-        method: "DELETE",
-      },
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to delete tweet ${id}`);
-    }
   }
 
   async getTweetStatistics(): Promise<TweetStatistics> {
@@ -249,57 +181,6 @@ class ApiService {
       throw new Error(`Failed to fetch classifier for tweet ${tweetId}`);
     }
     return response.json() as Promise<ApiClassifier>;
-  }
-
-  async createClassifier(
-    classifier: Omit<ApiClassifier, "tweet">,
-  ): Promise<ApiClassifier> {
-    const response = await fetch(
-      buildApiUrl(API_CONFIG.ENDPOINTS.CLASSIFIERS),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(classifier),
-      },
-    );
-    if (!response.ok) {
-      throw new Error("Failed to create classifier");
-    }
-    return response.json() as Promise<ApiClassifier>;
-  }
-
-  async updateClassifier(
-    tweetId: number,
-    classifier: Partial<Omit<ApiClassifier, "tweet_id" | "tweet">>,
-  ): Promise<ApiClassifier> {
-    const response = await fetch(
-      buildApiUrl(`${API_CONFIG.ENDPOINTS.CLASSIFIERS}/${tweetId}`),
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(classifier),
-      },
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to update classifier for tweet ${tweetId}`);
-    }
-    return response.json() as Promise<ApiClassifier>;
-  }
-
-  async deleteClassifier(tweetId: number): Promise<void> {
-    const response = await fetch(
-      buildApiUrl(`${API_CONFIG.ENDPOINTS.CLASSIFIERS}/${tweetId}`),
-      {
-        method: "DELETE",
-      },
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to delete classifier for tweet ${tweetId}`);
-    }
   }
 
   async getGroupStatistics(): Promise<GroupStatistics[]> {
