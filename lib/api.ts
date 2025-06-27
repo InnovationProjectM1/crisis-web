@@ -1,6 +1,5 @@
 import { API_CONFIG, buildApiUrl } from "./api-config";
 
-
 // Interface pour les tweets de l'API
 export interface ApiTweet {
   tweet_id: number;
