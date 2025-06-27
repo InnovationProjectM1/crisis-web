@@ -98,9 +98,6 @@ export function TrendChart() {
   >("line");
 
   // Base values for generating data
-  const baseNeeds = 50;
-  const baseResources = 80;
-  const baseVolunteers = 30;
   useEffect(() => {
     setLoading(true);
 
