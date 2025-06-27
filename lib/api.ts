@@ -1,6 +1,5 @@
 import { API_CONFIG, buildApiUrl } from "./api-config";
 
-const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // Interface pour les tweets de l'API
 export interface ApiTweet {
@@ -346,7 +345,7 @@ class ApiService {
     }>
   > {
     try {
-      const [tweets, groupStats] = await Promise.all([
+      const [tweets] = await Promise.all([
         this.getTweets(),
         this.getGroupStatistics(),
       ]);

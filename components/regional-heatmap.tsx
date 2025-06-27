@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import dynamic from "next/dynamic";
-import { apiService, Tweet } from "@/lib/api";
+import { apiService } from "@/lib/api";
 
 // Types
 interface HeatmapData {
