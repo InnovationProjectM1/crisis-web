@@ -1,31 +1,17 @@
-# Étape 1 : Build de l'app
-FROM node:20-alpine AS builder
+# Utiliser l'image Node.js alpine
+FROM node:22-alpine
+
+# Définir le répertoire de travail dans le container
 WORKDIR /app
 
-# Copie uniquement les fichiers nécessaires au build
-COPY package.json package-lock.json ./
-RUN npm ci
+# Copier les fichiers nécessaires depuis le répertoire local du projet
+COPY .next/standalone .next/standalone
+COPY public public
+COPY .next/static .next/static
 
-# Puis copie le reste du code
-COPY . .
-
-# Build l'application Next.js
-RUN npm run build
-
-# Étape 2 : Image finale, plus légère
-FROM node:20-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-
-# Copie uniquement les fichiers nécessaires au runtime
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-
-# Par défaut, Next écoute sur le port 3000
+# Exposer le port 3000 pour l'application
 EXPOSE 3000
 
-# Lancer Next.js en mode production
-CMD ["npx", "next", "start"]
+RUN cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+
+CMD ["node", ".next/standalone/server.js"]

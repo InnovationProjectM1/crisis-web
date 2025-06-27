@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "dev:local": "NODE_ENV=development next dev --turbopack",
+    "dev:prod": "NODE_ENV=production next dev --turbopack",
+    "restart": "killall node && npm run dev:local"
+  }
+}
