@@ -5,9 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import {
-  apiService,
-} from "@/lib/api";
+import { apiService } from "@/lib/api";
 
 interface TestResult {
   name: string;

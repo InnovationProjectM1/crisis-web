@@ -19,13 +19,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import {
-  AlertTriangle,
-  Clock,
-  MapPin,
-  Search,
-  ThumbsUp,
-} from "lucide-react";
+import { AlertTriangle, Clock, MapPin, Search, ThumbsUp } from "lucide-react";
 import { apiService, Tweet } from "@/lib/api";
 
 // Helper function pour formater le temps
