@@ -38,14 +38,6 @@ jobs:
       - name: 🔍 Linter
         run: npm run lint
 
-      # - name: 🧪 Tests
-      #   run: |
-      #     set +e
-      #     if ! npm test; then
-      #       echo "⚠️ Tests échoués ou non définis"
-      #       exit 0
-      #     fi
-
       - name: 🏗️ Build
         run: npm run build
 
