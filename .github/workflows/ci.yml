@@ -1,0 +1,57 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      TARGET_DIST: /app/dist
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/crisis-web
+
+    steps:
+      - name: 📥 Code checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🎨 Vérification Prettier
+        run: npm run prettier:check
+
+      - name: 🔍 Linter
+        run: npm run lint
+
+      - name: 🏗️ Build
+        run: npm run build
+
+      - name: 🐳 Login to Docker Hub
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 🐳 Build & Push Docker Image
+        if: github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
