@@ -47,7 +47,6 @@ jobs:
       #     fi
 
       - name: 🏗️ Build
-        if: github.ref == 'refs/heads/master'
         run: npm run build
 
       - name: 🐳 Login to Docker Hub
