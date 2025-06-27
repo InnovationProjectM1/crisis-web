@@ -21,7 +21,7 @@ jobs:
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/crisis-web
 
     steps:
-      - name: 📥 Checkout du code
+      - name: 📥 Code checkout
         uses: actions/checkout@v4
 
       - name: ⚙️ Setup Node.js
