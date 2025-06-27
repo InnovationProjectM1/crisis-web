@@ -7,16 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import {
   apiService,
-  Tweet,
-  TweetStatistics,
-  GroupStatistics,
-  DifficultyStatistics,
 } from "@/lib/api";
 
 interface TestResult {
   name: string;
   status: "success" | "error" | "loading";
-  data?: any;
+  data?: string;
   error?: string;
 }
 
@@ -261,7 +257,7 @@ export function ApiTest() {
         <Card>
           <CardContent className="flex items-center justify-center p-8">
             <p className="text-muted-foreground">
-              Click "Run Tests" to start testing the API
+              Click &#34;Run Tests&#34; to start testing the API
             </p>
           </CardContent>
         </Card>
