@@ -24,7 +24,10 @@ import { apiService, Category, Tweet } from '@/lib/api';
 
 // Helper function pour formater le temps
 function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString("fr-FR", {
+  return new Date(timestamp).toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -334,9 +337,9 @@ export function TweetAnalysis() {
   return (
     <div className="flex h-full gap-4">
       {/* Left Panel - Tweet List */}
-      <Card className="w-80 flex flex-col">
+      <Card className="w-80 flex flex-col h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Tweet Analysis</CardTitle>
+          <CardTitle className="text-lg">Tweet Analysis feed</CardTitle>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -348,7 +351,7 @@ export function TweetAnalysis() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-full px-4">
+          <ScrollArea className="h-[calc(100vh-250px)] px-4">
             <div className="space-y-2 pb-4">
               {filteredTweets.map((tweet) => (
                 <TweetCard

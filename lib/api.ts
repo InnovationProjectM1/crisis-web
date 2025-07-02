@@ -57,27 +57,21 @@ const mapClassificationToCategory = (
   if (!classifier) return "uncategorized";
 
   const group = classifier.classified_group.toLowerCase();
-  const subGroup = classifier.classified_sub_group.toLowerCase();
 
   // Logique de mapping - adaptez selon vos données
   if (
     group.includes("need") ||
-    subGroup.includes("need") ||
     group.includes("require") ||
-    subGroup.includes("require") ||
     group.includes("help") ||
-    subGroup.includes("help")
+    group.includes("request")
   ) {
     return "need";
   }
 
   if (
     group.includes("resource") ||
-    subGroup.includes("resource") ||
     group.includes("offer") ||
-    subGroup.includes("offer") ||
-    group.includes("available") ||
-    subGroup.includes("available")
+    group.includes("available")
   ) {
     return "resource";
   }
@@ -117,7 +111,7 @@ const convertApiTweetToFrontendTweet = (apiTweet: ApiTweet): Tweet => {
     username: `ScrappedUser`,
     category,
     urgency,
-    location: "Unknown Location",
+    location: "N/A",
     verified: !!apiTweet.classifier, //=Classified
     classifier: apiTweet.classifier,
   };
