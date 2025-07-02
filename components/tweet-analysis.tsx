@@ -20,18 +20,8 @@ import {
   Cell,
 } from "recharts";
 import { AlertTriangle, Clock, MapPin, Search, ThumbsUp } from "lucide-react";
-import { apiService, Category, Tweet } from '@/lib/api';
-
-// Helper function pour formater le temps
-function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { apiService, Category, Tweet } from "@/lib/api";
+import { formatTime } from "@/lib/date-utils";
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
@@ -247,11 +237,16 @@ export function TweetAnalysis() {
     loadTweets();
   }, []);
 
-  const filteredTweets = tweets.filter((tweet) =>
-    searchTerm
-      ? tweet.text.toLowerCase().includes(searchTerm.toLowerCase())
-      : true,
-  );
+  const filteredTweets = tweets
+    .filter((tweet) =>
+      searchTerm
+        ? tweet.text.toLowerCase().includes(searchTerm.toLowerCase())
+        : true,
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
 
   const handleTweetClick = (tweet: Tweet) => {
     setSelectedTweet(tweet);
@@ -270,8 +265,9 @@ export function TweetAnalysis() {
     },
     {
       name: "Uncategorized",
-      value: filteredTweets.filter((tweet) => tweet.category === "uncategorized")
-        .length,
+      value: filteredTweets.filter(
+        (tweet) => tweet.category === "uncategorized",
+      ).length,
     },
   ];
 

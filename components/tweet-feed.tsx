@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Clock, MapPin, ThumbsUp } from "lucide-react";
-import { formatTweetTime } from "@/lib/date-utils";
-import { apiService, Category, Tweet } from '@/lib/api';
+import { formatTime } from "@/lib/date-utils";
+import { apiService, Category, Tweet } from "@/lib/api";
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
@@ -82,7 +82,7 @@ function FeedTweet({ tweet, onClick }: FeedTweetProps) {
         <div className="font-medium">@{tweet.username}</div>
         <div className="flex items-center text-xs text-muted-foreground">
           <Clock className="h-3 w-3 mr-1" />
-          {formatTweetTime(tweet.timestamp)}
+          {formatTime(tweet.timestamp)}
         </div>
       </div>
 
@@ -108,7 +108,6 @@ export function TweetFeed() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Charger les tweets depuis l'API
     const loadTweets = async () => {
@@ -147,14 +146,26 @@ export function TweetFeed() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filtrage des tweets optimisé
-  const filteredTweets = tweets.filter(
-    (tweet) =>
-      search === "" ||
-      tweet.text.toLowerCase().includes(search.toLowerCase()) ||
-      tweet.location.toLowerCase().includes(search.toLowerCase()) ||
-      tweet.username.toLowerCase().includes(search.toLowerCase()),
-  );
+  // Tweets filtering and sorting, display only limited time tweets
+  const DAYS_LIMIT = 14;
+  const filteredTweets = tweets
+    .filter((tweet) => {
+      const tweetDate = new Date(tweet.timestamp);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - DAYS_LIMIT);
+
+      const matchesSearch =
+        search === "" ||
+        tweet.text.toLowerCase().includes(search.toLowerCase()) ||
+        tweet.location.toLowerCase().includes(search.toLowerCase()) ||
+        tweet.username.toLowerCase().includes(search.toLowerCase());
+
+      return matchesSearch && tweetDate >= thirtyDaysAgo;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
 
   // Tweets filtrés par catégorie pour les onglets
   const needTweets = filteredTweets.filter(
@@ -202,7 +213,7 @@ export function TweetFeed() {
         />
       </div>
 
-      <Tabs defaultValue="all" className="flex-1 flex flex-col">
+      <Tabs defaultValue="all" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-2 mt-2">
           <TabsTrigger value="all" className="flex-1">
             All
@@ -211,7 +222,7 @@ export function TweetFeed() {
             <div className="relative">
               Needs
               {needTweets.length > 0 && (
-                <Badge className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                <Badge className="absolute -top-4 -right-6 min-w-[5px] h-5 p-1 flex items-center justify-center text-xs rounded-full">
                   {needTweets.length}
                 </Badge>
               )}
@@ -221,7 +232,7 @@ export function TweetFeed() {
             <div className="relative">
               Resources
               {resourceTweets.length > 0 && (
-                <Badge className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                <Badge className="absolute -top-4 -right-6 min-w-[5px] h-5 p-1 flex items-center justify-center text-xs rounded-full">
                   {resourceTweets.length}
                 </Badge>
               )}
@@ -237,7 +248,7 @@ export function TweetFeed() {
                       ? "destructive"
                       : "default"
                   }
-                  className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full"
+                  className="absolute -top-4 -right-6 min-w-[5px] h-5 p-1 flex items-center justify-center text-xs rounded-full"
                 >
                   {alertTweets.length}
                 </Badge>
@@ -246,20 +257,22 @@ export function TweetFeed() {
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="flex-1 p-2" ref={scrollRef}>
-          <TabsContent value="all" className="m-0 p-0 space-y-2">
-            {renderTweets(filteredTweets)}
-          </TabsContent>
-          <TabsContent value="needs" className="m-0 p-0 space-y-2">
-            {renderTweets(needTweets)}
-          </TabsContent>
-          <TabsContent value="resources" className="m-0 p-0 space-y-2">
-            {renderTweets(resourceTweets)}
-          </TabsContent>
-          <TabsContent value="uncategorized" className="m-0 p-0 space-y-2">
-            {renderTweets(alertTweets)}
-          </TabsContent>
-        </ScrollArea>
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full p-2">
+            <TabsContent value="all" className="m-0 p-0 space-y-2">
+              {renderTweets(filteredTweets)}
+            </TabsContent>
+            <TabsContent value="needs" className="m-0 p-0 space-y-2">
+              {renderTweets(needTweets)}
+            </TabsContent>
+            <TabsContent value="resources" className="m-0 p-0 space-y-2">
+              {renderTweets(resourceTweets)}
+            </TabsContent>
+            <TabsContent value="uncategorized" className="m-0 p-0 space-y-2">
+              {renderTweets(alertTweets)}
+            </TabsContent>
+          </ScrollArea>
+        </div>
       </Tabs>
     </div>
   );

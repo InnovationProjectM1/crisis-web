@@ -298,7 +298,9 @@ export function TrendsAnalysis() {
       resourcesData.push(
         dayTweets.filter((t) => t.category === "resource").length,
       );
-      uncategorizedData.push(dayTweets.filter((t) => t.category === "uncategorized").length);
+      uncategorizedData.push(
+        dayTweets.filter((t) => t.category === "uncategorized").length,
+      );
 
       // Simuler le temps de réponse basé sur l'urgence
       const urgentTweets = dayTweets.filter((t) => t.urgency === "high").length;
@@ -423,7 +425,8 @@ export function TrendsAnalysis() {
             subcategoryCount("uncategorized", "emergency") ||
             subcategoryCount("uncategorized", "urgent") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "uncategorized").length * 0.3,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.3,
             ),
         },
         {
@@ -432,8 +435,8 @@ export function TrendsAnalysis() {
             subcategoryCount("uncategorized", "weather") ||
             subcategoryCount("uncategorized", "storm") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "uncategorized").length *
-                0.25,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.25,
             ),
         },
         {
@@ -442,7 +445,8 @@ export function TrendsAnalysis() {
             subcategoryCount("uncategorized", "power") ||
             subcategoryCount("uncategorized", "road") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "uncategorized").length * 0.2,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.2,
             ),
         },
         {
@@ -451,8 +455,8 @@ export function TrendsAnalysis() {
             subcategoryCount("uncategorized", "safety") ||
             subcategoryCount("uncategorized", "danger") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "uncategorized").length *
-                0.15,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.15,
             ),
         },
         {
@@ -461,7 +465,8 @@ export function TrendsAnalysis() {
             subcategoryCount("uncategorized", "health") ||
             subcategoryCount("uncategorized", "medical") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "uncategorized").length * 0.1,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.1,
             ),
         },
       ].sort((a, b) => b.value - a.value),
@@ -645,7 +650,11 @@ export function TrendsAnalysis() {
                     <Tooltip />
                     <Bar dataKey="needs" fill="#ef4444" name="Needs" />
                     <Bar dataKey="resources" fill="#3b82f6" name="Resources" />
-                    <Bar dataKey="uncategorized" fill="#f59e0b" name="Uncategorized" />
+                    <Bar
+                      dataKey="uncategorized"
+                      fill="#f59e0b"
+                      name="Uncategorized"
+                    />
                   </BarChart>
                 )}
               </ResponsiveContainer>
