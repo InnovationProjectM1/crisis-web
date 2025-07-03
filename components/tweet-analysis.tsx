@@ -1,11 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { VariableSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import {
+  useRef,
+  useCallback,
+  useState,
+  useEffect,
+  useLayoutEffect,
+} from "react";
+
 import {
   BarChart,
   Bar,
@@ -205,6 +213,93 @@ function ChartContainer({
   );
 }
 
+export function TweetList({
+  tweets,
+  selectedTweet,
+  onSelect,
+}: {
+  tweets: Tweet[];
+  selectedTweet: Tweet | null;
+  onSelect: (tweet: Tweet) => void;
+}) {
+  const listRef = useRef<List>(null);
+  const rowHeights = useRef<Record<number, number>>({});
+
+  const getItemSize = useCallback((index: number) => {
+    return rowHeights.current[index] ?? 100;
+  }, []);
+
+  const measurementPending = useRef(false);
+
+  const setRowHeight = (index: number, size: number) => {
+    if (rowHeights.current[index] !== size) {
+      rowHeights.current = { ...rowHeights.current, [index]: size };
+
+      if (!measurementPending.current) {
+        measurementPending.current = true;
+        requestAnimationFrame(() => {
+          listRef.current?.resetAfterIndex(0, true);
+          measurementPending.current = false;
+        });
+      }
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (listRef.current && tweets.length > 0) {
+      listRef.current.resetAfterIndex(0, true);
+    }
+  }, [tweets.length]);
+
+  return (
+    <div className="h-[calc(100vh-250px)]">
+      <AutoSizer>
+        {({ height, width }) => (
+          <List
+            ref={listRef}
+            height={height}
+            itemCount={tweets.length}
+            itemSize={getItemSize}
+            width={width}
+          >
+            {({ index, style }) => (
+              <div style={{ ...style, padding: 8, boxSizing: "border-box" }}>
+                <AutoHeightWrapper index={index} setHeight={setRowHeight}>
+                  <TweetCard
+                    tweet={tweets[index]}
+                    isSelected={selectedTweet?.id === tweets[index].id}
+                    onClick={() => onSelect(tweets[index])}
+                  />
+                </AutoHeightWrapper>
+              </div>
+            )}
+          </List>
+        )}
+      </AutoSizer>
+    </div>
+  );
+}
+
+function AutoHeightWrapper({
+  children,
+  index,
+  setHeight,
+}: {
+  children: React.ReactNode;
+  index: number;
+  setHeight: (index: number, size: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      setHeight(index, ref.current.offsetHeight);
+    }
+  }, [index, setHeight]);
+
+  return <div ref={ref}>{children}</div>;
+}
+
 export function TweetAnalysis() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [selectedTweet, setSelectedTweet] = useState<Tweet | null>(null);
@@ -357,23 +452,13 @@ export function TweetAnalysis() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-[calc(100vh-250px)] px-4">
-            <div className="space-y-2 pb-4">
-              {filteredTweets.map((tweet) => (
-                <TweetCard
-                  key={tweet.id}
-                  tweet={tweet}
-                  isSelected={selectedTweet?.id === tweet.id}
-                  onClick={() => handleTweetClick(tweet)}
-                />
-              ))}
-              {filteredTweets.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No tweets found
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+          <div className="h-[calc(100vh-250px)]">
+            <TweetList
+              tweets={filteredTweets}
+              selectedTweet={selectedTweet}
+              onSelect={handleTweetClick}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -401,13 +486,13 @@ export function TweetAnalysis() {
               </div>
             </CardHeader>
             <CardContent>
-            <div className="relative mb-4">
-              <Quote className="h-4 w-4 text-muted-foreground absolute -top-2 left-0 rotate-180" />
-              <p className="text-sm italic text-gray-500 border-l pl-3 ml-2">
-                {selectedTweet.text}
-              </p>
-              <Quote className="h-4 w-4 text-muted-foreground absolute -bottom-2 right-0" />
-            </div>
+              <div className="relative mb-4">
+                <Quote className="h-4 w-4 text-muted-foreground absolute -top-2 left-0 rotate-180" />
+                <p className="text-sm italic text-gray-500 border-l pl-3 ml-2">
+                  {selectedTweet.text}
+                </p>
+                <Quote className="h-4 w-4 text-muted-foreground absolute -bottom-2 right-0" />
+              </div>
 
               <h2 className="text-lg font-medium mb-2">Analysis</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
