@@ -475,8 +475,8 @@ export function TweetAnalysis() {
                     @{selectedTweet.username}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {formatTime(selectedTweet.timestamp)} •{" "}
-                    Tweet ID: {selectedTweet.id}
+                    {formatTime(selectedTweet.timestamp)} • Tweet ID:{" "}
+                    {selectedTweet.id}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
