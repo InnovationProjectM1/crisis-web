@@ -500,10 +500,6 @@ export function TrendsAnalysis() {
             placeholder="Pick a date"
             className="w-[240px]"
           />
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </Button>
         </div>
       </div>
 
