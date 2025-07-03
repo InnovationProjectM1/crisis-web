@@ -19,7 +19,14 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { AlertTriangle, Clock, MapPin, Search, ThumbsUp } from "lucide-react";
+import {
+  AlertTriangle, ChartBarStacked,
+  Clock,
+  MapPin,
+  Search, SearchCheck,
+  ShieldAlert,
+  ThumbsUp
+} from 'lucide-react';
 import { apiService, Category, Tweet } from "@/lib/api";
 import { formatTime } from "@/lib/date-utils";
 
@@ -393,14 +400,18 @@ export function TweetAnalysis() {
             <CardContent>
               <p className="text-sm mb-4">{selectedTweet.text}</p>
 
+              <h2 className="text-lg font-medium mb-2">Analysis</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
+                <div className="flex items-center gap-1">
+                  <ChartBarStacked className="h-4 w-4$" />
                   <span className="font-medium">Category:</span>{" "}
                   {selectedTweet.category}
                 </div>
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">
-                    Urgency Level: {selectedTweet.classifier?.severity ?? "N/A"}{" "}
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
+                    <ShieldAlert className="h-4 w-4" />
+                    Urgency Level: {selectedTweet.classifier?.severity ??
+                      "N/A"}{" "}
                     ({selectedTweet.urgency})
                   </h4>
 
@@ -419,11 +430,13 @@ export function TweetAnalysis() {
                     <span>High</span>
                   </div>
                 </div>
-                <div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
                   <span className="font-medium">Location:</span>{" "}
                   {selectedTweet.location}
                 </div>
-                <div>
+                <div className="flex items-center gap-1">
+                  <SearchCheck className="h-4 w-4" />
                   <span className="font-medium">Verified:</span>{" "}
                   {selectedTweet.verified ? "Yes" : "No"}
                 </div>
