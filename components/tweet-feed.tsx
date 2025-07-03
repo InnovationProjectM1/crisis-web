@@ -8,7 +8,10 @@ import { AlertTriangle, Clock, MapPin, ThumbsUp } from "lucide-react";
 import { formatTime } from "@/lib/date-utils";
 import { apiService, Category, Tweet } from "@/lib/api";
 
-// Composants réutilisables pour réduire la duplication de code
+interface TweetFeedProps {
+  onTweetLocationClick?: (lat: number, lng: number) => void;
+}
+
 interface CategoryBadgeProps {
   category: Category;
   className?: string;
@@ -104,7 +107,7 @@ function FeedTweet({ tweet, onClick }: FeedTweetProps) {
   );
 }
 
-export function TweetFeed() {
+export function TweetFeed({ onTweetLocationClick }: TweetFeedProps) {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -225,7 +228,11 @@ export function TweetFeed() {
     }
 
     return categoryTweets.map((tweet) => (
-      <FeedTweet key={tweet.id} tweet={tweet} />
+      <FeedTweet
+        key={tweet.id}
+        tweet={tweet}
+        onClick={() => onTweetLocationClick?.(tweet.coordinates.lat, tweet.coordinates.lng)}
+      />
     ));
   };
 

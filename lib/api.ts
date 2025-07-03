@@ -43,7 +43,7 @@ export interface Tweet {
   category: Category;
   urgency: "low" | "medium" | "high";
   location: string;
-  coordinates?: { lat: number; lng: number };
+  coordinates: { lat: number; lng: number };
   verified: boolean;
   classifier?: ApiClassifier;
 }
@@ -111,7 +111,11 @@ const convertApiTweetToFrontendTweet = (apiTweet: ApiTweet): Tweet => {
     username: `ScrappedUser`,
     category,
     urgency,
-    location: "N/A",
+    location: "Unknown",
+    coordinates: {
+      lat: 48.85 + (Math.random() - 0.5) * 0.1,
+      lng: 2.34 + (Math.random() - 0.5) * 0.1,
+    },
     verified: !!apiTweet.classifier, //=Classified
     classifier: apiTweet.classifier,
   };

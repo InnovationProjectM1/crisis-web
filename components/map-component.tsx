@@ -42,9 +42,15 @@ interface MapComponentProps {
   regions: Region[];
   mapType: "standard" | "satellite";
   setMapType: (type: "standard" | "satellite") => void;
+  innerMapRef?: (map: L.Map) => void;
 }
 
-function MapComponent({ regions, mapType, setMapType }: MapComponentProps) {
+function MapComponent({
+  regions,
+  mapType,
+  setMapType,
+  innerMapRef,
+}: MapComponentProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
@@ -204,6 +210,10 @@ function MapComponent({ regions, mapType, setMapType }: MapComponentProps) {
     tileLayerRef.current = tileLayer;
     mapRef.current = map;
 
+    if (innerMapRef) {
+      innerMapRef(map);
+    }
+
     // Ajouter les marqueurs
     updateMarkers();
 
@@ -216,7 +226,7 @@ function MapComponent({ regions, mapType, setMapType }: MapComponentProps) {
         markersRef.current = [];
       }
     };
-  }, [mapType, regions, updateMarkers]);
+  }, [mapType, regions, updateMarkers, innerMapRef]);
 
   // Mettre à jour les marqueurs quand les régions changent
   useEffect(() => {
