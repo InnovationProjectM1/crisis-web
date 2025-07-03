@@ -476,7 +476,7 @@ export function TweetAnalysis() {
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {formatTime(selectedTweet.timestamp)} •{" "}
-                    {selectedTweet.location}
+                    Tweet ID: {selectedTweet.id}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -500,7 +500,10 @@ export function TweetAnalysis() {
                 <div className="flex items-center gap-1">
                   <ChartBarStacked className="h-4 w-4" />
                   <span className="font-medium">Category:</span>{" "}
-                  {selectedTweet ? selectedTweet.category.charAt(0).toUpperCase() + selectedTweet.category.slice(1) : "N/A"}
+                  {selectedTweet
+                    ? selectedTweet.category.charAt(0).toUpperCase() +
+                      selectedTweet.category.slice(1)
+                    : "N/A"}
                 </div>
 
                 <div className="flex items-center gap-1 mt-1">
@@ -518,7 +521,7 @@ export function TweetAnalysis() {
 
                   <div className="w-full h-2 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full relative">
                     <div
-                      className="h-4 w-1 bg-black rounded-full absolute -top-1"
+                      className="h-4 w-1 bg-gray-500 rounded-full absolute -top-1"
                       style={{
                         marginLeft: `${((Number(selectedTweet.classifier?.severity ?? 3) - 1) / 4) * 100}%`,
                       }}

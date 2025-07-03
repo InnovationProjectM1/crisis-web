@@ -10,8 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { DATE_FORMATS } from "@/lib/date-utils";
 import { RegionalHeatmap } from "./regional-heatmap";
 import {
   LineChart,
@@ -161,7 +159,6 @@ function MiniChart({
 export function TrendsAnalysis() {
   const [timeRange, setTimeRange] = useState("24h");
   const [chartType, setChartType] = useState<"line" | "bar">("line");
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<{
     tweets: Tweet[];
@@ -494,15 +491,6 @@ export function TrendsAnalysis() {
             Analyze patterns and trends in crisis data over time to improve
             response efforts.
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <DatePicker
-            date={date}
-            onDateChange={setDate}
-            format={DATE_FORMATS.long}
-            placeholder="Pick a date"
-            className="w-[240px]"
-          />
         </div>
       </div>
 
