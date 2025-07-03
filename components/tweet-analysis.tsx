@@ -398,9 +398,26 @@ export function TweetAnalysis() {
                   <span className="font-medium">Category:</span>{" "}
                   {selectedTweet.category}
                 </div>
-                <div>
-                  <span className="font-medium">Urgency:</span>{" "}
-                  {selectedTweet.urgency}
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">
+                    Urgency Level: {selectedTweet.classifier?.severity ?? "N/A"}{" "}
+                    ({selectedTweet.urgency})
+                  </h4>
+
+                  <div className="w-full h-2 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full relative">
+                    <div
+                      className="h-4 w-1 bg-black rounded-full absolute -top-1"
+                      style={{
+                        marginLeft: `${((Number(selectedTweet.classifier?.severity ?? 3) - 1) / 4) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Low</span>
+                    <span>Medium</span>
+                    <span>High</span>
+                  </div>
                 </div>
                 <div>
                   <span className="font-medium">Location:</span>{" "}
