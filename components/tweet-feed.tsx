@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -137,13 +137,6 @@ export function TweetFeed() {
     };
 
     loadTweets();
-
-    // Rafraîchir les données périodiquement
-    const interval = setInterval(() => {
-      loadTweets();
-    }, 30000); // Toutes les 30 secondes
-
-    return () => clearInterval(interval);
   }, []);
 
   // Tweets filtering and sorting, display only limited time tweets
@@ -166,6 +159,41 @@ export function TweetFeed() {
       (a, b) =>
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
+
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "need" | "resource" | "uncategorized"
+  >("all");
+  const [selectedSubGroup, setSelectedSubGroup] = useState<string>("all");
+
+  const filterBySubGroup = (tweets: Tweet[]) => {
+    if (selectedSubGroup === "all") return tweets;
+    return tweets.filter(
+      (t) => t.classifier?.classified_sub_group === selectedSubGroup,
+    );
+  };
+
+  const subGroups = useMemo(() => {
+    return Array.from(
+      new Set(
+        filteredTweets
+          .filter((t) => t.category === selectedCategory)
+          .map((t) => t.classifier?.classified_sub_group)
+          .filter(Boolean),
+      ),
+    );
+  }, [filteredTweets, selectedCategory]);
+
+  useEffect(() => {
+    if (
+      selectedCategory !== "all" &&
+      selectedCategory !== "uncategorized" &&
+      subGroups.length > 0
+    ) {
+      setSelectedSubGroup(subGroups[0]!);
+    } else {
+      setSelectedSubGroup("all");
+    }
+  }, [selectedCategory, subGroups.join("|")]);
 
   // Tweets filtrés par catégorie pour les onglets
   const needTweets = filteredTweets.filter(
@@ -213,12 +241,20 @@ export function TweetFeed() {
         />
       </div>
 
-      <Tabs defaultValue="all" className="flex-1 flex flex-col overflow-hidden">
+      <Tabs
+        defaultValue="all"
+        value={selectedCategory}
+        onValueChange={(val) => {
+          setSelectedCategory(val as typeof selectedCategory);
+          setSelectedSubGroup("all");
+        }}
+        className="flex-1 flex flex-col overflow-hidden"
+      >
         <TabsList className="mx-2 mt-2">
           <TabsTrigger value="all" className="flex-1">
             All
           </TabsTrigger>
-          <TabsTrigger value="needs" className="flex-1">
+          <TabsTrigger value="need" className="flex-1">
             <div className="relative">
               Needs
               {needTweets.length > 0 && (
@@ -228,7 +264,7 @@ export function TweetFeed() {
               )}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="resources" className="flex-1">
+          <TabsTrigger value="resource" className="flex-1">
             <div className="relative">
               Resources
               {resourceTweets.length > 0 && (
@@ -257,16 +293,38 @@ export function TweetFeed() {
           </TabsTrigger>
         </TabsList>
 
+        {subGroups.length > 0 &&
+          selectedCategory !== "all" &&
+          selectedCategory !== "uncategorized" && (
+            <Tabs
+              value={selectedSubGroup}
+              onValueChange={(val) => setSelectedSubGroup(val)}
+              className="mx-2 mt-2"
+            >
+              <TabsList className="h-8 min-h-8 whitespace-nowrap">
+                {subGroups.map((subGroup) => (
+                  <TabsTrigger
+                    key={subGroup}
+                    value={subGroup!}
+                    className="flex-none h-7 px-2 text-xs whitespace-nowrap"
+                  >
+                    {subGroup}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )}
+
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full p-2">
             <TabsContent value="all" className="m-0 p-0 space-y-2">
               {renderTweets(filteredTweets)}
             </TabsContent>
-            <TabsContent value="needs" className="m-0 p-0 space-y-2">
-              {renderTweets(needTweets)}
+            <TabsContent value="need" className="m-0 p-0 space-y-2">
+              {renderTweets(filterBySubGroup(needTweets))}
             </TabsContent>
-            <TabsContent value="resources" className="m-0 p-0 space-y-2">
-              {renderTweets(resourceTweets)}
+            <TabsContent value="resource" className="m-0 p-0 space-y-2">
+              {renderTweets(filterBySubGroup(resourceTweets))}
             </TabsContent>
             <TabsContent value="uncategorized" className="m-0 p-0 space-y-2">
               {renderTweets(alertTweets)}
