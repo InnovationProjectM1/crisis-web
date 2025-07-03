@@ -70,17 +70,17 @@ export function ApiTest() {
       });
     }
 
-    // Test getDifficultyStatistics
+    // Test getSeverityStatistics
     try {
-      const difficultyStats = await apiService.getDifficultyStatistics();
+      const severityStats = await apiService.getSeverityStatistics();
       testResults.push({
-        name: "Get Difficulty Statistics",
+        name: "Get severity Statistics",
         status: "success",
-        data: `${difficultyStats.length} difficulty levels found`,
+        data: `${severityStats.length} severity levels found`,
       });
     } catch (error) {
       testResults.push({
-        name: "Get Difficulty Statistics",
+        name: "Get Severity Statistics",
         status: "error",
         error: (error as Error).message,
       });

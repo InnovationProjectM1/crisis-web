@@ -13,7 +13,7 @@ export interface ApiClassifier {
   tweet_id: string;
   classified_group: string;
   classified_sub_group: string;
-  difficulty: string;
+  severity: string;
   tweet?: ApiTweet;
 }
 
@@ -29,8 +29,8 @@ export interface GroupStatistics {
   count: string;
 }
 
-export interface DifficultyStatistics {
-  difficulty: string;
+export interface SeverityStatistics {
+  severity: string;
   count: string;
 }
 
@@ -80,12 +80,12 @@ const mapClassificationToCategory = (
 };
 
 // Mapping de la difficulté vers l'urgence
-const mapDifficultyToUrgency = (
-  difficulty?: string,
+const mapSeverityToUrgency = (
+  severity?: string,
 ): "low" | "medium" | "high" => {
-  if (!difficulty) return "medium";
+  if (!severity) return "medium";
 
-  const diff = difficulty.toLowerCase();
+  const diff = severity.toLowerCase();
   if (
     diff.includes("high") ||
     diff.includes("urgent") ||
@@ -102,7 +102,7 @@ const mapDifficultyToUrgency = (
 // Conversion d'un tweet API vers un tweet frontend
 const convertApiTweetToFrontendTweet = (apiTweet: ApiTweet): Tweet => {
   const category = mapClassificationToCategory(apiTweet.classifier);
-  const urgency = mapDifficultyToUrgency(apiTweet.classifier?.difficulty);
+  const urgency = mapSeverityToUrgency(apiTweet.classifier?.severity);
 
   return {
     id: apiTweet.tweet_id,
@@ -196,17 +196,17 @@ class ApiService {
     }
   }
 
-  async getDifficultyStatistics(): Promise<DifficultyStatistics[]> {
+  async getSeverityStatistics(): Promise<SeverityStatistics[]> {
     try {
       const response = await fetch(
-        buildApiUrl(API_CONFIG.ENDPOINTS.DIFFICULTY_STATISTICS),
+        buildApiUrl(API_CONFIG.ENDPOINTS.SEVERITY_STATISTICS),
       );
       if (!response.ok) {
-        throw new Error("Failed to fetch difficulty statistics");
+        throw new Error("Failed to fetch severity statistics");
       }
-      return response.json() as Promise<DifficultyStatistics[]>;
+      return response.json() as Promise<SeverityStatistics[]>;
     } catch (error) {
-      console.error("Error fetching difficulty statistics:", error);
+      console.error("Error fetching severity statistics:", error);
       return [];
     }
   }

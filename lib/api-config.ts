@@ -6,7 +6,7 @@ export const API_CONFIG = {
     CLASSIFIERS: "/classifiers",
     TWEET_STATISTICS: "/tweets/statistics",
     GROUP_STATISTICS: "/classifiers/statistics/groups",
-    DIFFICULTY_STATISTICS: "/classifiers/statistics/difficulty",
+    SEVERITY_STATISTICS: "/classifiers/statistics/severity",
   },
   // Configuration pour les données géographiques par défaut
   DEFAULT_COORDINATES: {

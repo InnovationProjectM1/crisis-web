@@ -31,7 +31,7 @@ import {
   apiService,
   Tweet,
   GroupStatistics,
-  DifficultyStatistics,
+  SeverityStatistics,
   TweetStatistics,
 } from "@/lib/api";
 
@@ -166,12 +166,12 @@ export function TrendsAnalysis() {
   const [apiData, setApiData] = useState<{
     tweets: Tweet[];
     groupStats: GroupStatistics[];
-    difficultyStats: DifficultyStatistics[];
+    severityStats: SeverityStatistics[];
     tweetStats: TweetStatistics;
   }>({
     tweets: [],
     groupStats: [],
-    difficultyStats: [],
+    severityStats: [],
     tweetStats: { total: 0, classified: 0, unclassified: 0 },
   });
 
@@ -180,15 +180,15 @@ export function TrendsAnalysis() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [tweets, groupStats, difficultyStats, tweetStats] =
+        const [tweets, groupStats, severityStats, tweetStats] =
           await Promise.all([
             apiService.getTweets(),
             apiService.getGroupStatistics(),
-            apiService.getDifficultyStatistics(),
+            apiService.getSeverityStatistics(),
             apiService.getTweetStatistics(),
           ]);
 
-        setApiData({ tweets, groupStats, difficultyStats, tweetStats });
+        setApiData({ tweets, groupStats, severityStats: severityStats, tweetStats });
       } catch (error) {
         console.error("Error loading API data:", error);
       } finally {

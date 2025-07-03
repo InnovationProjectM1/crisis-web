@@ -427,8 +427,8 @@ export function TweetAnalysis() {
                       {selectedTweet.classifier.classified_sub_group}
                     </div>
                     <div className="col-span-2">
-                      <span className="font-medium">Difficulty:</span>{" "}
-                      {selectedTweet.classifier.difficulty}
+                      <span className="font-medium">Severity:</span>{" "}
+                      {selectedTweet.classifier.severity}
                     </div>
                   </div>
                 </div>
