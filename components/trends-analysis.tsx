@@ -188,7 +188,12 @@ export function TrendsAnalysis() {
             apiService.getTweetStatistics(),
           ]);
 
-        setApiData({ tweets, groupStats, severityStats: severityStats, tweetStats });
+        setApiData({
+          tweets,
+          groupStats,
+          severityStats: severityStats,
+          tweetStats,
+        });
       } catch (error) {
         console.error("Error loading API data:", error);
       } finally {

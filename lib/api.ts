@@ -80,9 +80,7 @@ const mapClassificationToCategory = (
 };
 
 // Mapping severity of classifier to urgency
-const mapSeverityToUrgency = (
-  severity?: string,
-): "low" | "medium" | "high" => {
+const mapSeverityToUrgency = (severity?: string): "low" | "medium" | "high" => {
   if (!severity) return "medium";
 
   const normalized = severity.trim().toLowerCase();
