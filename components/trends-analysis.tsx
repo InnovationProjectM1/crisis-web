@@ -10,9 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Download } from "lucide-react";
 import { DATE_FORMATS } from "@/lib/date-utils";
 import { RegionalHeatmap } from "./regional-heatmap";
 import {

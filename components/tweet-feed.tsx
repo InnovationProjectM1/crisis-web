@@ -231,7 +231,9 @@ export function TweetFeed({ onTweetLocationClick }: TweetFeedProps) {
       <FeedTweet
         key={tweet.id}
         tweet={tweet}
-        onClick={() => onTweetLocationClick?.(tweet.coordinates.lat, tweet.coordinates.lng)}
+        onClick={() =>
+          onTweetLocationClick?.(tweet.coordinates.lat, tweet.coordinates.lng)
+        }
       />
     ));
   };
