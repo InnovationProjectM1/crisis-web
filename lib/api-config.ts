@@ -6,7 +6,7 @@ export const API_CONFIG = {
     CLASSIFIERS: "/classifiers",
     TWEET_STATISTICS: "/tweets/statistics",
     GROUP_STATISTICS: "/classifiers/statistics/groups",
-    DIFFICULTY_STATISTICS: "/classifiers/statistics/difficulty",
+    SEVERITY_STATISTICS: "/classifiers/statistics/severity",
   },
   // Configuration pour les données géographiques par défaut
   DEFAULT_COORDINATES: {
@@ -32,7 +32,7 @@ export const API_CONFIG = {
       text: "API connection failed - showing demo data",
       timestamp: new Date().toISOString(),
       username: "SystemAlert",
-      category: "alert" as const,
+      category: "uncategorized" as const,
       urgency: "high" as const,
       location: "System",
       coordinates: { lat: 48.8566, lng: 2.3522 },

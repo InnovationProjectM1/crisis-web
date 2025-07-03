@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Clock, MapPin, ThumbsUp } from "lucide-react";
-import { formatTweetTime } from "@/lib/date-utils";
-import { apiService, Tweet } from "@/lib/api";
+import { formatTime } from "@/lib/date-utils";
+import { apiService, Category, Tweet } from "@/lib/api";
 
-// Composants réutilisables pour réduire la duplication de code
+interface TweetFeedProps {
+  onTweetLocationClick?: (lat: number, lng: number) => void;
+}
+
 interface CategoryBadgeProps {
-  category: "need" | "resource" | "alert";
+  category: Category;
   className?: string;
 }
 
@@ -82,7 +85,7 @@ function FeedTweet({ tweet, onClick }: FeedTweetProps) {
         <div className="font-medium">@{tweet.username}</div>
         <div className="flex items-center text-xs text-muted-foreground">
           <Clock className="h-3 w-3 mr-1" />
-          {formatTweetTime(tweet.timestamp)}
+          {formatTime(tweet.timestamp)}
         </div>
       </div>
 
@@ -104,11 +107,10 @@ function FeedTweet({ tweet, onClick }: FeedTweetProps) {
   );
 }
 
-export function TweetFeed() {
+export function TweetFeed({ onTweetLocationClick }: TweetFeedProps) {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Charger les tweets depuis l'API
     const loadTweets = async () => {
@@ -125,7 +127,7 @@ export function TweetFeed() {
             text: "API connection failed - showing demo data",
             timestamp: new Date().toISOString(),
             username: "SystemAlert",
-            category: "alert",
+            category: "uncategorized",
             urgency: "high",
             location: "System",
             coordinates: { lat: 34.052, lng: -118.243 },
@@ -138,23 +140,63 @@ export function TweetFeed() {
     };
 
     loadTweets();
-
-    // Rafraîchir les données périodiquement
-    const interval = setInterval(() => {
-      loadTweets();
-    }, 30000); // Toutes les 30 secondes
-
-    return () => clearInterval(interval);
   }, []);
 
-  // Filtrage des tweets optimisé
-  const filteredTweets = tweets.filter(
-    (tweet) =>
-      search === "" ||
-      tweet.text.toLowerCase().includes(search.toLowerCase()) ||
-      tweet.location.toLowerCase().includes(search.toLowerCase()) ||
-      tweet.username.toLowerCase().includes(search.toLowerCase()),
-  );
+  // Tweets filtering and sorting, display only limited time tweets
+  const DAYS_LIMIT = 14;
+  const filteredTweets = tweets
+    .filter((tweet) => {
+      const tweetDate = new Date(tweet.timestamp);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - DAYS_LIMIT);
+
+      const matchesSearch =
+        search === "" ||
+        tweet.text.toLowerCase().includes(search.toLowerCase()) ||
+        tweet.location.toLowerCase().includes(search.toLowerCase()) ||
+        tweet.username.toLowerCase().includes(search.toLowerCase());
+
+      return matchesSearch && tweetDate >= thirtyDaysAgo;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
+
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "need" | "resource" | "uncategorized"
+  >("all");
+  const [selectedSubGroup, setSelectedSubGroup] = useState<string>("all");
+
+  const filterBySubGroup = (tweets: Tweet[]) => {
+    if (selectedSubGroup === "all") return tweets;
+    return tweets.filter(
+      (t) => t.classifier?.classified_sub_group === selectedSubGroup,
+    );
+  };
+
+  const subGroups = useMemo(() => {
+    return Array.from(
+      new Set(
+        filteredTweets
+          .filter((t) => t.category === selectedCategory)
+          .map((t) => t.classifier?.classified_sub_group)
+          .filter(Boolean),
+      ),
+    );
+  }, [filteredTweets, selectedCategory]);
+
+  useEffect(() => {
+    if (
+      selectedCategory !== "all" &&
+      selectedCategory !== "uncategorized" &&
+      subGroups.length > 0
+    ) {
+      setSelectedSubGroup(subGroups[0]!);
+    } else {
+      setSelectedSubGroup("all");
+    }
+  }, [selectedCategory, subGroups.join("|")]);
 
   // Tweets filtrés par catégorie pour les onglets
   const needTweets = filteredTweets.filter(
@@ -164,7 +206,7 @@ export function TweetFeed() {
     (tweet) => tweet.category === "resource",
   );
   const alertTweets = filteredTweets.filter(
-    (tweet) => tweet.category === "alert",
+    (tweet) => tweet.category === "uncategorized",
   );
 
   // Fonction pour afficher les tweets selon la catégorie
@@ -186,7 +228,13 @@ export function TweetFeed() {
     }
 
     return categoryTweets.map((tweet) => (
-      <FeedTweet key={tweet.id} tweet={tweet} />
+      <FeedTweet
+        key={tweet.id}
+        tweet={tweet}
+        onClick={() =>
+          onTweetLocationClick?.(tweet.coordinates.lat, tweet.coordinates.lng)
+        }
+      />
     ));
   };
 
@@ -202,34 +250,42 @@ export function TweetFeed() {
         />
       </div>
 
-      <Tabs defaultValue="all" className="flex-1 flex flex-col">
+      <Tabs
+        defaultValue="all"
+        value={selectedCategory}
+        onValueChange={(val) => {
+          setSelectedCategory(val as typeof selectedCategory);
+          setSelectedSubGroup("all");
+        }}
+        className="flex-1 flex flex-col overflow-hidden"
+      >
         <TabsList className="mx-2 mt-2">
           <TabsTrigger value="all" className="flex-1">
             All
           </TabsTrigger>
-          <TabsTrigger value="needs" className="flex-1">
+          <TabsTrigger value="need" className="flex-1">
             <div className="relative">
               Needs
               {needTweets.length > 0 && (
-                <Badge className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                <Badge className="absolute -top-4 -right-6 min-w-[5px] h-5 p-1 flex items-center justify-center text-xs rounded-full">
                   {needTweets.length}
                 </Badge>
               )}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="resources" className="flex-1">
+          <TabsTrigger value="resource" className="flex-1">
             <div className="relative">
               Resources
               {resourceTweets.length > 0 && (
-                <Badge className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full">
+                <Badge className="absolute -top-4 -right-6 min-w-[5px] h-5 p-1 flex items-center justify-center text-xs rounded-full">
                   {resourceTweets.length}
                 </Badge>
               )}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="flex-1">
+          <TabsTrigger value="uncategorized" className="flex-1">
             <div className="relative">
-              Alerts
+              Uncategorized
               {alertTweets.length > 0 && (
                 <Badge
                   variant={
@@ -237,7 +293,7 @@ export function TweetFeed() {
                       ? "destructive"
                       : "default"
                   }
-                  className="absolute -top-3 -right-3 h-5 w-5 p-0 flex items-center justify-center rounded-full"
+                  className="absolute -top-4 -right-6 min-w-[5px] h-5 p-1 flex items-center justify-center text-xs rounded-full"
                 >
                   {alertTweets.length}
                 </Badge>
@@ -246,20 +302,44 @@ export function TweetFeed() {
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="flex-1 p-2" ref={scrollRef}>
-          <TabsContent value="all" className="m-0 p-0 space-y-2">
-            {renderTweets(filteredTweets)}
-          </TabsContent>
-          <TabsContent value="needs" className="m-0 p-0 space-y-2">
-            {renderTweets(needTweets)}
-          </TabsContent>
-          <TabsContent value="resources" className="m-0 p-0 space-y-2">
-            {renderTweets(resourceTweets)}
-          </TabsContent>
-          <TabsContent value="alerts" className="m-0 p-0 space-y-2">
-            {renderTweets(alertTweets)}
-          </TabsContent>
-        </ScrollArea>
+        {subGroups.length > 0 &&
+          selectedCategory !== "all" &&
+          selectedCategory !== "uncategorized" && (
+            <Tabs
+              value={selectedSubGroup}
+              onValueChange={(val) => setSelectedSubGroup(val)}
+              className="mx-2 mt-2"
+            >
+              <TabsList className="h-8 min-h-8 whitespace-nowrap">
+                {subGroups.map((subGroup) => (
+                  <TabsTrigger
+                    key={subGroup}
+                    value={subGroup!}
+                    className="flex-none h-7 px-2 text-xs whitespace-nowrap"
+                  >
+                    {subGroup}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )}
+
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full p-2">
+            <TabsContent value="all" className="m-0 p-0 space-y-2">
+              {renderTweets(filteredTweets)}
+            </TabsContent>
+            <TabsContent value="need" className="m-0 p-0 space-y-2">
+              {renderTweets(filterBySubGroup(needTweets))}
+            </TabsContent>
+            <TabsContent value="resource" className="m-0 p-0 space-y-2">
+              {renderTweets(filterBySubGroup(resourceTweets))}
+            </TabsContent>
+            <TabsContent value="uncategorized" className="m-0 p-0 space-y-2">
+              {renderTweets(alertTweets)}
+            </TabsContent>
+          </ScrollArea>
+        </div>
       </Tabs>
     </div>
   );

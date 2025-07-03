@@ -1,6 +1,5 @@
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Menu, Search } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,7 +62,7 @@ export function Header({ setSidebarOpen, title }: HeaderProps) {
         )}
       </div>
       {/* Search bar only */}
-      <div className="flex-1 flex items-center justify-center gap-4 min-w-0">
+      {/*<div className="flex-1 flex items-center justify-center gap-4 min-w-0">
         <div className="relative w-full max-w-md hidden md:block">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -72,7 +71,7 @@ export function Header({ setSidebarOpen, title }: HeaderProps) {
             className="pl-8 pr-4 w-full rounded-md shadow-sm"
           />
         </div>
-      </div>
+      </div>*/}
       {/* Right: Dark mode + User menu */}
       <div className="flex items-center gap-4 min-w-0">
         <Toggle

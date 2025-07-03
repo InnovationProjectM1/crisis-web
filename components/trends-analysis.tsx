@@ -10,10 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Download } from "lucide-react";
-import { DATE_FORMATS } from "@/lib/date-utils";
 import { RegionalHeatmap } from "./regional-heatmap";
 import {
   LineChart,
@@ -33,7 +29,7 @@ import {
   apiService,
   Tweet,
   GroupStatistics,
-  DifficultyStatistics,
+  SeverityStatistics,
   TweetStatistics,
 } from "@/lib/api";
 
@@ -163,17 +159,16 @@ function MiniChart({
 export function TrendsAnalysis() {
   const [timeRange, setTimeRange] = useState("24h");
   const [chartType, setChartType] = useState<"line" | "bar">("line");
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const [loading, setLoading] = useState(true);
   const [apiData, setApiData] = useState<{
     tweets: Tweet[];
     groupStats: GroupStatistics[];
-    difficultyStats: DifficultyStatistics[];
+    severityStats: SeverityStatistics[];
     tweetStats: TweetStatistics;
   }>({
     tweets: [],
     groupStats: [],
-    difficultyStats: [],
+    severityStats: [],
     tweetStats: { total: 0, classified: 0, unclassified: 0 },
   });
 
@@ -182,15 +177,20 @@ export function TrendsAnalysis() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [tweets, groupStats, difficultyStats, tweetStats] =
+        const [tweets, groupStats, severityStats, tweetStats] =
           await Promise.all([
             apiService.getTweets(),
             apiService.getGroupStatistics(),
-            apiService.getDifficultyStatistics(),
+            apiService.getSeverityStatistics(),
             apiService.getTweetStatistics(),
           ]);
 
-        setApiData({ tweets, groupStats, difficultyStats, tweetStats });
+        setApiData({
+          tweets,
+          groupStats,
+          severityStats: severityStats,
+          tweetStats,
+        });
       } catch (error) {
         console.error("Error loading API data:", error);
       } finally {
@@ -206,13 +206,13 @@ export function TrendsAnalysis() {
       return {
         needs: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
         resources: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
-        alerts: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
+        uncategorized: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
         responseTime: generateTimeData([0, 0, 0, 0, 0, 0, 0]),
         trendData: [],
         categoryData: {
           needs: [],
           resources: [],
-          alerts: [],
+          uncategorized: [],
         },
       };
     }
@@ -222,7 +222,7 @@ export function TrendsAnalysis() {
     const days = 7;
     const needsData = [];
     const resourcesData = [];
-    const alertsData = [];
+    const uncategorizedData = [];
     const responseTimeData = [];
     const trendData = [];
 
@@ -270,15 +270,15 @@ export function TrendsAnalysis() {
       const resourcesCount = periodTweets.filter(
         (t) => t.category === "resource",
       ).length;
-      const alertsCount = periodTweets.filter(
-        (t) => t.category === "alert",
+      const uncategorizedCount = periodTweets.filter(
+        (t) => t.category === "uncategorized",
       ).length;
 
       trendData.push({
         name,
         needs: needsCount,
         resources: resourcesCount,
-        alerts: alertsCount,
+        uncategorized: uncategorizedCount,
       });
     }
 
@@ -298,7 +298,9 @@ export function TrendsAnalysis() {
       resourcesData.push(
         dayTweets.filter((t) => t.category === "resource").length,
       );
-      alertsData.push(dayTweets.filter((t) => t.category === "alert").length);
+      uncategorizedData.push(
+        dayTweets.filter((t) => t.category === "uncategorized").length,
+      );
 
       // Simuler le temps de réponse basé sur l'urgence
       const urgentTweets = dayTweets.filter((t) => t.urgency === "high").length;
@@ -416,52 +418,55 @@ export function TrendsAnalysis() {
         },
       ].sort((a, b) => b.value - a.value),
 
-      alerts: [
+      uncategorized: [
         {
           name: "Emergency",
           value:
-            subcategoryCount("alert", "emergency") ||
-            subcategoryCount("alert", "urgent") ||
+            subcategoryCount("uncategorized", "emergency") ||
+            subcategoryCount("uncategorized", "urgent") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "alert").length * 0.3,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.3,
             ),
         },
         {
           name: "Weather",
           value:
-            subcategoryCount("alert", "weather") ||
-            subcategoryCount("alert", "storm") ||
+            subcategoryCount("uncategorized", "weather") ||
+            subcategoryCount("uncategorized", "storm") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "alert").length *
-                0.25,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.25,
             ),
         },
         {
           name: "Infrastructure",
           value:
-            subcategoryCount("alert", "power") ||
-            subcategoryCount("alert", "road") ||
+            subcategoryCount("uncategorized", "power") ||
+            subcategoryCount("uncategorized", "road") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "alert").length * 0.2,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.2,
             ),
         },
         {
           name: "Safety",
           value:
-            subcategoryCount("alert", "safety") ||
-            subcategoryCount("alert", "danger") ||
+            subcategoryCount("uncategorized", "safety") ||
+            subcategoryCount("uncategorized", "danger") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "alert").length *
-                0.15,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.15,
             ),
         },
         {
           name: "Health",
           value:
-            subcategoryCount("alert", "health") ||
-            subcategoryCount("alert", "medical") ||
+            subcategoryCount("uncategorized", "health") ||
+            subcategoryCount("uncategorized", "medical") ||
             Math.floor(
-              apiData.tweets.filter((t) => t.category === "alert").length * 0.1,
+              apiData.tweets.filter((t) => t.category === "uncategorized")
+                .length * 0.1,
             ),
         },
       ].sort((a, b) => b.value - a.value),
@@ -470,7 +475,7 @@ export function TrendsAnalysis() {
     return {
       needs: generateTimeData(needsData),
       resources: generateTimeData(resourcesData),
-      alerts: generateTimeData(alertsData),
+      uncategorized: generateTimeData(uncategorizedData),
       responseTime: generateTimeData(responseTimeData),
       trendData,
       categoryData,
@@ -486,19 +491,6 @@ export function TrendsAnalysis() {
             Analyze patterns and trends in crisis data over time to improve
             response efforts.
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <DatePicker
-            date={date}
-            onDateChange={setDate}
-            format={DATE_FORMATS.long}
-            placeholder="Pick a date"
-            className="w-[240px]"
-          />
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export Data
-          </Button>
         </div>
       </div>
 
@@ -535,13 +527,13 @@ export function TrendsAnalysis() {
           changeType="positive"
         />
         <MiniChart
-          data={chartData.alerts}
-          title="Active Alerts"
+          data={chartData.uncategorized}
+          title="Active Uncategorized"
           value={
             loading
               ? "..."
               : apiData.tweets
-                  .filter((t) => t.category === "alert")
+                  .filter((t) => t.category === "uncategorized")
                   .length.toString()
           }
           change={
@@ -628,10 +620,10 @@ export function TrendsAnalysis() {
                     />
                     <Line
                       type="monotone"
-                      dataKey="alerts"
+                      dataKey="uncategorized"
                       stroke="#f59e0b"
                       strokeWidth={2}
-                      name="Alerts"
+                      name="Uncategorized"
                     />
                   </LineChart>
                 ) : (
@@ -645,7 +637,11 @@ export function TrendsAnalysis() {
                     <Tooltip />
                     <Bar dataKey="needs" fill="#ef4444" name="Needs" />
                     <Bar dataKey="resources" fill="#3b82f6" name="Resources" />
-                    <Bar dataKey="alerts" fill="#f59e0b" name="Alerts" />
+                    <Bar
+                      dataKey="uncategorized"
+                      fill="#f59e0b"
+                      name="Uncategorized"
+                    />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -671,7 +667,7 @@ export function TrendsAnalysis() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="needs">Needs</TabsTrigger>
               <TabsTrigger value="resources">Resources</TabsTrigger>
-              <TabsTrigger value="alerts">Alerts</TabsTrigger>
+              <TabsTrigger value="uncategorized">Uncategorized</TabsTrigger>
             </TabsList>
             <div className="h-[300px] mt-4">
               {" "}
@@ -705,10 +701,10 @@ export function TrendsAnalysis() {
                   </BarChart>
                 </ResponsiveContainer>
               </TabsContent>{" "}
-              <TabsContent value="alerts" className="h-full">
+              <TabsContent value="uncategorized" className="h-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={chartData.categoryData.alerts}
+                    data={chartData.categoryData.uncategorized}
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />

@@ -87,7 +87,6 @@ export function TrendChart() {
       timestamp: Date;
       Needs: number;
       Resources: number;
-      Volunteers: number;
       change?: number;
     }[]
   >([]);
@@ -117,7 +116,6 @@ export function TrendChart() {
           timestamp: Date;
           Needs: number;
           Resources: number;
-          Volunteers: number;
           change?: number;
         }> = [];
 
@@ -140,9 +138,6 @@ export function TrendChart() {
           const resourcesValue = Math.floor(
             80 * (1.1 - dayFactor * 0.2) * randomFactor,
           );
-          const volunteersValue = Math.floor(
-            30 * (dayFactor * 0.7 + 0.5) * randomFactor,
-          );
 
           const change =
             i > 0
@@ -163,7 +158,6 @@ export function TrendChart() {
             timestamp: date,
             Needs: needsValue,
             Resources: resourcesValue,
-            Volunteers: volunteersValue,
             change,
           });
         }
@@ -295,20 +289,6 @@ export function TrendChart() {
                   activeDot={{ r: 6 }}
                   animationDuration={1000}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="Volunteers"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{
-                    stroke: "#3b82f6",
-                    strokeWidth: 1,
-                    fill: "#fff",
-                    r: 3,
-                  }}
-                  activeDot={{ r: 6 }}
-                  animationDuration={1000}
-                />
                 {timeRange === "24h" && (
                   <Brush
                     dataKey="label"
@@ -344,12 +324,6 @@ export function TrendChart() {
                 <Bar
                   dataKey="Resources"
                   fill="#22c55e"
-                  radius={[4, 4, 0, 0]}
-                  animationDuration={1000}
-                />
-                <Bar
-                  dataKey="Volunteers"
-                  fill="#3b82f6"
                   radius={[4, 4, 0, 0]}
                   animationDuration={1000}
                 />
@@ -415,15 +389,6 @@ export function TrendChart() {
                   activeDot={{ r: 6 }}
                   animationDuration={1000}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="Volunteers"
-                  stroke="#3b82f6"
-                  fillOpacity={1}
-                  fill="url(#colorVolunteers)"
-                  activeDot={{ r: 6 }}
-                  animationDuration={1000}
-                />
               </AreaChart>
             ) : (
               <ComposedChart
@@ -456,14 +421,6 @@ export function TrendChart() {
                   stroke="#22c55e"
                   strokeWidth={3}
                   activeDot={{ r: 6 }}
-                  animationDuration={1000}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="Volunteers"
-                  fill="#3b82f6"
-                  fillOpacity={0.3}
-                  stroke="#3b82f6"
                   animationDuration={1000}
                 />
                 <Scatter dataKey="Needs" fill="#ef4444" />

@@ -1,11 +1,16 @@
+"use client";
+
 import { TweetFeed } from "./tweet-feed";
-import { ResourceMap } from "./resource-map";
+import { ResourceMap, ResourceMapHandle } from "./resource-map";
 import { TrendChart } from "./trend-chart";
 import { RegionalHeatmap } from "./regional-heatmap";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { useRef } from "react";
 
 export default function Dashboard() {
+  const resourceMapRef = useRef<ResourceMapHandle>(null);
+
   return (
     <div className="flex flex-col h-full min-h-0 w-full gap-4">
       {/* Main area: TweetFeed (left), ResourceMap (right) */}
@@ -18,13 +23,17 @@ export default function Dashboard() {
         {/* TweetFeed */}
         <Card className="flex flex-col flex-1 min-h-0 max-h-full lg:max-w-[420px] lg:flex-[0_0_380px]">
           <CardContent className="flex-1 flex flex-col min-h-0 p-4 overflow-hidden">
-            <TweetFeed />
+            <TweetFeed
+              onTweetLocationClick={(lat, lng) => {
+                resourceMapRef.current?.focusOnCoordinates(lat, lng);
+              }}
+            />
           </CardContent>
         </Card>
         {/* ResourceMap */}
         <Card className="flex flex-col flex-1 min-h-0 max-h-full">
           <CardContent className="flex-1 flex flex-col min-h-0 p-4 overflow-hidden">
-            <ResourceMap />
+            <ResourceMap ref={resourceMapRef} />
           </CardContent>
         </Card>
       </div>

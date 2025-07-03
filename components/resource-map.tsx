@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import dynamic from "next/dynamic";
 import { apiService } from "@/lib/api";
 
@@ -19,16 +25,29 @@ interface Region {
   resources: Resource[];
 }
 
+export interface ResourceMapHandle {
+  focusOnCoordinates: (lat: number, lng: number) => void;
+}
+
 // Import the MapComponent dynamically with no SSR
 const MapComponentWithNoSSR = dynamic(
   () => import("./map-component").then((mod) => mod.MapComponent),
   { ssr: false },
 );
 
-export function ResourceMap() {
+export const ResourceMap = forwardRef<ResourceMapHandle>((_, ref) => {
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [mapType, setMapType] = useState<"standard" | "satellite">("standard");
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusOnCoordinates(lat: number, lng: number) {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setView([lat, lng], 15, { animate: true });
+      }
+    },
+  }));
 
   useEffect(() => {
     // Charger les données de la carte depuis l'API
@@ -80,8 +99,13 @@ export function ResourceMap() {
           regions={regions}
           mapType={mapType}
           setMapType={setMapType}
+          innerMapRef={(mapInstance) => {
+            mapInstanceRef.current = mapInstance;
+          }}
         />
       </div>
     </div>
   );
-}
+});
+
+ResourceMap.displayName = "ResourceMap";

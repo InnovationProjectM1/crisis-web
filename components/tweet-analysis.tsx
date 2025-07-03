@@ -1,11 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { VariableSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import {
+  useRef,
+  useCallback,
+  useState,
+  useEffect,
+  useLayoutEffect,
+} from "react";
+
 import {
   BarChart,
   Bar,
@@ -19,20 +27,24 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { AlertTriangle, Clock, MapPin, Search, ThumbsUp } from "lucide-react";
-import { apiService, Tweet } from "@/lib/api";
-
-// Helper function pour formater le temps
-function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import {
+  AlertTriangle,
+  ChartBarStacked,
+  ChartColumnStacked,
+  Clock,
+  MapPin,
+  Quote,
+  Search,
+  SearchCheck,
+  ShieldAlert,
+  ThumbsUp,
+} from "lucide-react";
+import { apiService, Category, Tweet } from "@/lib/api";
+import { formatTime } from "@/lib/date-utils";
 
 // Composants réutilisables pour réduire la duplication de code
 interface CategoryBadgeProps {
-  category: "need" | "resource" | "alert";
+  category: Category;
   className?: string;
 }
 
@@ -202,6 +214,93 @@ function ChartContainer({
   );
 }
 
+export function TweetList({
+  tweets,
+  selectedTweet,
+  onSelect,
+}: {
+  tweets: Tweet[];
+  selectedTweet: Tweet | null;
+  onSelect: (tweet: Tweet) => void;
+}) {
+  const listRef = useRef<List>(null);
+  const rowHeights = useRef<Record<number, number>>({});
+
+  const getItemSize = useCallback((index: number) => {
+    return rowHeights.current[index] ?? 100;
+  }, []);
+
+  const measurementPending = useRef(false);
+
+  const setRowHeight = (index: number, size: number) => {
+    if (rowHeights.current[index] !== size) {
+      rowHeights.current = { ...rowHeights.current, [index]: size };
+
+      if (!measurementPending.current) {
+        measurementPending.current = true;
+        requestAnimationFrame(() => {
+          listRef.current?.resetAfterIndex(0, true);
+          measurementPending.current = false;
+        });
+      }
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (listRef.current && tweets.length > 0) {
+      listRef.current.resetAfterIndex(0, true);
+    }
+  }, [tweets.length]);
+
+  return (
+    <div className="h-[calc(100vh-250px)]">
+      <AutoSizer>
+        {({ height, width }) => (
+          <List
+            ref={listRef}
+            height={height}
+            itemCount={tweets.length}
+            itemSize={getItemSize}
+            width={width}
+          >
+            {({ index, style }) => (
+              <div style={{ ...style, padding: 8, boxSizing: "border-box" }}>
+                <AutoHeightWrapper index={index} setHeight={setRowHeight}>
+                  <TweetCard
+                    tweet={tweets[index]}
+                    isSelected={selectedTweet?.id === tweets[index].id}
+                    onClick={() => onSelect(tweets[index])}
+                  />
+                </AutoHeightWrapper>
+              </div>
+            )}
+          </List>
+        )}
+      </AutoSizer>
+    </div>
+  );
+}
+
+function AutoHeightWrapper({
+  children,
+  index,
+  setHeight,
+}: {
+  children: React.ReactNode;
+  index: number;
+  setHeight: (index: number, size: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      setHeight(index, ref.current.offsetHeight);
+    }
+  }, [index, setHeight]);
+
+  return <div ref={ref}>{children}</div>;
+}
+
 export function TweetAnalysis() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [selectedTweet, setSelectedTweet] = useState<Tweet | null>(null);
@@ -227,7 +326,7 @@ export function TweetAnalysis() {
             text: "API connection failed - showing demo data",
             timestamp: new Date().toISOString(),
             username: "SystemAlert",
-            category: "alert",
+            category: "uncategorized",
             urgency: "high",
             location: "System",
             coordinates: { lat: 34.052, lng: -118.243 },
@@ -244,11 +343,16 @@ export function TweetAnalysis() {
     loadTweets();
   }, []);
 
-  const filteredTweets = tweets.filter((tweet) =>
-    searchTerm
-      ? tweet.text.toLowerCase().includes(searchTerm.toLowerCase())
-      : true,
-  );
+  const filteredTweets = tweets
+    .filter((tweet) =>
+      searchTerm
+        ? tweet.text.toLowerCase().includes(searchTerm.toLowerCase())
+        : true,
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
 
   const handleTweetClick = (tweet: Tweet) => {
     setSelectedTweet(tweet);
@@ -266,9 +370,10 @@ export function TweetAnalysis() {
         .length,
     },
     {
-      name: "Alert",
-      value: filteredTweets.filter((tweet) => tweet.category === "alert")
-        .length,
+      name: "Uncategorized",
+      value: filteredTweets.filter(
+        (tweet) => tweet.category === "uncategorized",
+      ).length,
     },
   ];
 
@@ -334,9 +439,9 @@ export function TweetAnalysis() {
   return (
     <div className="flex h-full gap-4">
       {/* Left Panel - Tweet List */}
-      <Card className="w-80 flex flex-col">
+      <Card className="w-80 flex flex-col h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Tweet Analysis</CardTitle>
+          <CardTitle className="text-lg">Tweet Analysis feed</CardTitle>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -348,23 +453,13 @@ export function TweetAnalysis() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 p-0">
-          <ScrollArea className="h-full px-4">
-            <div className="space-y-2 pb-4">
-              {filteredTweets.map((tweet) => (
-                <TweetCard
-                  key={tweet.id}
-                  tweet={tweet}
-                  isSelected={selectedTweet?.id === tweet.id}
-                  onClick={() => handleTweetClick(tweet)}
-                />
-              ))}
-              {filteredTweets.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No tweets found
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+          <div className="h-[calc(100vh-250px)]">
+            <TweetList
+              tweets={filteredTweets}
+              selectedTweet={selectedTweet}
+              onSelect={handleTweetClick}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -380,8 +475,8 @@ export function TweetAnalysis() {
                     @{selectedTweet.username}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    {formatTime(selectedTweet.timestamp)} •{" "}
-                    {selectedTweet.location}
+                    {formatTime(selectedTweet.timestamp)} • Tweet ID:{" "}
+                    {selectedTweet.id}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -392,22 +487,60 @@ export function TweetAnalysis() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm mb-4">{selectedTweet.text}</p>
+              <div className="relative mb-4">
+                <Quote className="h-4 w-4 text-muted-foreground absolute -top-2 left-0 rotate-180" />
+                <p className="text-sm italic text-gray-500 border-l pl-3 ml-2">
+                  {selectedTweet.text}
+                </p>
+                <Quote className="h-4 w-4 text-muted-foreground absolute -bottom-2 right-0" />
+              </div>
 
+              <h2 className="text-lg font-medium mb-2">Analysis</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
+                <div className="flex items-center gap-1">
+                  <ChartBarStacked className="h-4 w-4" />
                   <span className="font-medium">Category:</span>{" "}
-                  {selectedTweet.category}
+                  {selectedTweet
+                    ? selectedTweet.category.charAt(0).toUpperCase() +
+                      selectedTweet.category.slice(1)
+                    : "N/A"}
                 </div>
-                <div>
-                  <span className="font-medium">Urgency:</span>{" "}
-                  {selectedTweet.urgency}
+
+                <div className="flex items-center gap-1 mt-1">
+                  <ChartColumnStacked className="h-4 w-4" />
+                  <span className="font-medium">Subcategory:</span>{" "}
+                  {selectedTweet.classifier?.classified_sub_group ?? "N/A"}
                 </div>
-                <div>
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
+                    <ShieldAlert className="h-4 w-4" />
+                    Urgency Level: {selectedTweet.classifier?.severity ??
+                      "N/A"}{" "}
+                    ({selectedTweet.urgency})
+                  </h4>
+
+                  <div className="w-full h-2 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full relative">
+                    <div
+                      className="h-4 w-1 bg-gray-500 rounded-full absolute -top-1"
+                      style={{
+                        marginLeft: `${((Number(selectedTweet.classifier?.severity ?? 3) - 1) / 4) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+
+                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                    <span>Low</span>
+                    <span>Medium</span>
+                    <span>High</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
                   <span className="font-medium">Location:</span>{" "}
                   {selectedTweet.location}
                 </div>
-                <div>
+                <div className="flex items-center gap-1">
+                  <SearchCheck className="h-4 w-4" />
                   <span className="font-medium">Verified:</span>{" "}
                   {selectedTweet.verified ? "Yes" : "No"}
                 </div>
@@ -428,8 +561,8 @@ export function TweetAnalysis() {
                       {selectedTweet.classifier.classified_sub_group}
                     </div>
                     <div className="col-span-2">
-                      <span className="font-medium">Difficulty:</span>{" "}
-                      {selectedTweet.classifier.difficulty}
+                      <span className="font-medium">Severity:</span>{" "}
+                      {selectedTweet.classifier.severity}
                     </div>
                   </div>
                 </div>
