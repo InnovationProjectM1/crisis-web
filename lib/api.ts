@@ -79,24 +79,26 @@ const mapClassificationToCategory = (
   return "uncategorized";
 };
 
-// Mapping de la difficulté vers l'urgence
+// Mapping severity of classifier to urgency
 const mapSeverityToUrgency = (
   severity?: string,
 ): "low" | "medium" | "high" => {
   if (!severity) return "medium";
 
-  const diff = severity.toLowerCase();
-  if (
-    diff.includes("high") ||
-    diff.includes("urgent") ||
-    diff.includes("critical")
-  ) {
-    return "high";
+  const normalized = severity.trim().toLowerCase();
+
+  switch (normalized) {
+    case "1":
+    case "2":
+      return "low";
+    case "3":
+    case "4":
+      return "medium";
+    case "5":
+      return "high";
+    default:
+      return "medium";
   }
-  if (diff.includes("low") || diff.includes("minor")) {
-    return "low";
-  }
-  return "medium";
 };
 
 // Conversion d'un tweet API vers un tweet frontend
