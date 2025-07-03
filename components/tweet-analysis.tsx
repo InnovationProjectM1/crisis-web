@@ -30,6 +30,7 @@ import {
 import {
   AlertTriangle,
   ChartBarStacked,
+  ChartColumnStacked,
   Clock,
   MapPin,
   Quote,
@@ -497,9 +498,15 @@ export function TweetAnalysis() {
               <h2 className="text-lg font-medium mb-2">Analysis</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-1">
-                  <ChartBarStacked className="h-4 w-4$" />
+                  <ChartBarStacked className="h-4 w-4" />
                   <span className="font-medium">Category:</span>{" "}
-                  {selectedTweet.category}
+                  {selectedTweet ? selectedTweet.category.charAt(0).toUpperCase() + selectedTweet.category.slice(1) : "N/A"}
+                </div>
+
+                <div className="flex items-center gap-1 mt-1">
+                  <ChartColumnStacked className="h-4 w-4" />
+                  <span className="font-medium">Subcategory:</span>{" "}
+                  {selectedTweet.classifier?.classified_sub_group ?? "N/A"}
                 </div>
                 <div className="mt-4">
                   <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
