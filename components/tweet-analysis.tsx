@@ -20,13 +20,16 @@ import {
   Cell,
 } from "recharts";
 import {
-  AlertTriangle, ChartBarStacked,
+  AlertTriangle,
+  ChartBarStacked,
   Clock,
   MapPin,
-  Search, SearchCheck,
+  Quote,
+  Search,
+  SearchCheck,
   ShieldAlert,
-  ThumbsUp
-} from 'lucide-react';
+  ThumbsUp,
+} from "lucide-react";
 import { apiService, Category, Tweet } from "@/lib/api";
 import { formatTime } from "@/lib/date-utils";
 
@@ -398,7 +401,13 @@ export function TweetAnalysis() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm mb-4">{selectedTweet.text}</p>
+            <div className="relative mb-4">
+              <Quote className="h-4 w-4 text-muted-foreground absolute -top-2 left-0 rotate-180" />
+              <p className="text-sm italic text-gray-500 border-l pl-3 ml-2">
+                {selectedTweet.text}
+              </p>
+              <Quote className="h-4 w-4 text-muted-foreground absolute -bottom-2 right-0" />
+            </div>
 
               <h2 className="text-lg font-medium mb-2">Analysis</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
